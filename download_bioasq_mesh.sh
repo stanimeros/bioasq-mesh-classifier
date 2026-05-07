@@ -6,6 +6,11 @@
 #   export BIOASQ_PASSWORD='your_password'
 #   bash download_bioasq_mesh.sh
 #
+# Run detached (SSH-safe); log to file:
+#   nohup env BIOASQ_USERNAME='…' BIOASQ_PASSWORD='…' ./download_bioasq_mesh.sh >> download_bioasq.log 2>&1 &
+#   disown   # optional: drop job from shell so it is not SIGHUP’d on some setups
+# Use BIOASQ_QUIET=1 for less noisy logs when not on a TTY.
+#
 # Optional:
 #   BIOASQ_OUTPUT   output path (default: data/allMeSH_2022.json)
 #   BIOASQ_COOKIE   cookie jar path (default: data/.bioasq_cookies.txt)
@@ -121,6 +126,8 @@ curl -sS -L -c "$COOKIE_JAR" -b "$COOKIE_JAR" \
   "$LOGIN_URL" -o /dev/null
 
 echo "Downloading allMeSH dataset..."
+echo "  URL: ${DOWNLOAD_URL}"
+echo "  -> ${OUT}"
 if [[ "${BIOASQ_QUIET:-0}" == "1" ]]; then
   curl -sS -L -c "$COOKIE_JAR" -b "$COOKIE_JAR" \
     -e "${BASE_URL}/" \
