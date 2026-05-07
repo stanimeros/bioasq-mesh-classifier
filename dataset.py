@@ -8,11 +8,20 @@ from tqdm import tqdm
 def load_bioasq_data(path, max_articles=None):
     """Streaming parser for BioASQ allMeSH JSON format.
 
-    Uses ijson to stream articles from the top-level 'articles' array
-    without loading the entire file into memory.
+    Handles both plain JSON and ZIP-compressed JSON (BioASQ distribution format).
+    Uses ijson to stream articles from the top-level 'articles' array.
     """
+    import zipfile
+
+    def open_json(path):
+        if zipfile.is_zipfile(path):
+            zf = zipfile.ZipFile(path, "r")
+            name = next(n for n in zf.namelist() if n.endswith(".json"))
+            return zf.open(name)
+        return open(path, "rb")
+
     texts, label_lists = [], []
-    with open(path, "rb") as f:
+    with open_json(path) as f:
         articles_iter = ijson.items(f, "articles.item", use_float=True)
         for article in tqdm(articles_iter, desc="Loading", unit=" articles"):
             title = article.get("title", "")
