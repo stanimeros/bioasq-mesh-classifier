@@ -14,17 +14,42 @@ def load_bioasq_data(path, max_articles=None):
     import zipfile
     import io
 
+    class Utf8CleanStream:
+        """Wraps a binary file, replacing invalid UTF-8 bytes on the fly in chunks
+        so ijson never chokes without reading the entire file into RAM first."""
+        def __init__(self, fileobj, chunk_size=1 << 20):
+            self._f = fileobj
+            self._chunk_size = chunk_size
+            self._buf = b""
+
+        def read(self, size=-1):
+            if size == -1:
+                raw = self._buf + self._f.read()
+                self._buf = b""
+            else:
+                while len(self._buf) < size:
+                    chunk = self._f.read(self._chunk_size)
+                    if not chunk:
+                        break
+                    self._buf += chunk
+                raw, self._buf = self._buf[:size], self._buf[size:]
+            return raw.decode("utf-8", errors="replace").encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            self._f.close()
+
     def open_json(path):
         if zipfile.is_zipfile(path):
             zf = zipfile.ZipFile(path, "r")
             name = next(n for n in zf.namelist() if n.endswith(".json"))
             raw = zf.open(name).read()
+            cleaned = raw.decode("utf-8", errors="replace").encode("utf-8")
+            return io.BytesIO(cleaned)
         else:
-            with open(path, "rb") as f:
-                raw = f.read()
-        # Replace invalid UTF-8 bytes so ijson doesn't choke
-        cleaned = raw.decode("utf-8", errors="replace").encode("utf-8")
-        return io.BytesIO(cleaned)
+            return Utf8CleanStream(open(path, "rb"))
 
     texts, label_lists = [], []
     with open_json(path) as f:
