@@ -27,6 +27,15 @@ build/
 .DS_Store
 Thumbs.db
 
+# LaTeX
+paper/*.aux
+paper/*.log
+paper/*.bbl
+paper/*.blg
+paper/*.out
+paper/*.toc
+paper/*.pdf
+
 # IDE
 .vscode/
 .idea/
