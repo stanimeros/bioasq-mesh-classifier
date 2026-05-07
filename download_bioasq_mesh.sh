@@ -88,10 +88,11 @@ if [[ "${BIOASQ_DEBUG:-0}" == "1" ]]; then
 fi
 
 CSRF=""
-if csrf="$(csrf_from_html "$LOGIN_HTML" 2>/dev/null)" && [[ -n "$csrf" ]]; then
+# Django often sets csrftoken on the first GET; it matches the hidden field value.
+if csrf="$(csrf_from_cookie_jar)" && [[ -n "$csrf" ]]; then
   CSRF="$csrf"
 fi
-if [[ -z "$CSRF" ]] && csrf="$(csrf_from_cookie_jar)" && [[ -n "$csrf" ]]; then
+if [[ -z "$CSRF" ]] && csrf="$(csrf_from_html "$LOGIN_HTML" 2>/dev/null)" && [[ -n "$csrf" ]]; then
   CSRF="$csrf"
 fi
 
