@@ -1,0 +1,60 @@
+\begin{thebibliography}{9}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Beltagy et~al.(2019)Beltagy, Lo, and Cohan]{beltagy2019scibert}
+Iz~Beltagy, Kyle Lo, and Arman Cohan.
+\newblock {SciBERT}: A pretrained language model for scientific text.
+\newblock In \emph{Proceedings of EMNLP}, 2019.
+
+\bibitem[Devlin et~al.(2019)Devlin, Chang, Lee, and Toutanova]{devlin2019bert}
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova.
+\newblock {BERT}: Pre-training of deep bidirectional transformers for language
+  understanding.
+\newblock In \emph{Proceedings of NAACL}, 2019.
+
+\bibitem[Du et~al.(2019)Du, Yao, et~al.]{meshcnn}
+Jingcheng Du, Liang Yao, et~al.
+\newblock Mesh-cnn: Text classification for biomedical articles.
+\newblock In \emph{BioASQ Workshop}, 2019.
+
+\bibitem[Joulin et~al.(2016)Joulin, Grave, Bojanowski, and Mikolov]{joulin2017}
+Armand Joulin, Edouard Grave, Piotr Bojanowski, and Tomas Mikolov.
+\newblock Bag of tricks for efficient text classification.
+\newblock \emph{arXiv preprint arXiv:1607.01759}, 2016.
+
+\bibitem[Lee et~al.(2020)Lee, Yoon, Kim, Kim, Kim, So, and
+  Kang]{lee2020biobert}
+Jinhyuk Lee, Wonjin Yoon, Sungdong Kim, Donghyeon Kim, Sunkyu Kim, Chan~Ho So,
+  and Jaewoo Kang.
+\newblock {BioBERT}: a pre-trained biomedical language representation model for
+  biomedical text mining.
+\newblock \emph{Bioinformatics}, 36\penalty0 (4):\penalty0 1234--1240, 2020.
+
+\bibitem[Mikolov et~al.(2013)Mikolov, Sutskever, Chen, Corrado, and
+  Dean]{mikolov2013}
+Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg Corrado, and Jeff Dean.
+\newblock Distributed representations of words and phrases and their
+  compositionality.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2013.
+
+\bibitem[{National Library of Medicine}()]{mti}
+{National Library of Medicine}.
+\newblock {MTI}: Medical text indexer.
+\newblock URL \url{https://ii.nlm.nih.gov/MTI/}.
+
+\bibitem[Peng et~al.(2019)]{attentionmesh}
+Yulong Peng et~al.
+\newblock {AttentionMeSH}: Simple, scalable and accurate mesh indexer.
+\newblock In \emph{BioASQ Workshop}, 2019.
+
+\bibitem[Tsatsaronis et~al.(2015)]{bioasq2015}
+George Tsatsaronis et~al.
+\newblock An overview of the {BIOASQ} large-scale biomedical semantic indexing
+  and question answering competition.
+\newblock In \emph{BMC Bioinformatics}, volume~16, 2015.
+
+\end{thebibliography}

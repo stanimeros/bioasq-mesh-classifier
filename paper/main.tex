@@ -1,0 +1,170 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{microtype}
+\usepackage{multicol}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[numbers]{natbib}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Multi-Label MeSH Term Classification of Biomedical Articles\\
+Using Pre-trained Language Models}}
+
+\author{
+    Panteleimon Stanimeros\textsuperscript{1} \quad Nikolaos Strafiotis\textsuperscript{1} \\
+    \textsuperscript{1}MSc in AI and Data Analytics (AIDA), University of Macedonia \\
+    \texttt{\{aid26006, aid26012\}@uom.edu.gr}
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We address the task of automatic MeSH (Medical Subject Headings) term assignment to biomedical articles,
+formulated as a multi-label classification problem. Using only the title and abstract of each article,
+we fine-tune BioBERT, a domain-specific pre-trained language model, on the BioASQ 2015b Task A dataset.
+We evaluate performance using micro-averaged and macro-averaged F1 scores.
+Our results show that \ldots % fill in after experiments
+\end{abstract}
+
+\section{Introduction}
+
+Medical literature is indexed in PubMed using MeSH (Medical Subject Headings), a controlled vocabulary
+maintained by the National Library of Medicine. Manually assigning MeSH terms to the growing volume of
+biomedical publications is time-consuming and expensive. Automatic biomedical indexing, the task of
+predicting MeSH terms from an article's text, therefore has significant practical value.
+
+This paper presents our approach to the BioASQ Task A challenge~\cite{bioasq2015}, which frames the
+problem as multi-label classification: each article may be assigned multiple MeSH terms simultaneously.
+We focus exclusively on the title and abstract as input, and leverage pre-trained biomedical language
+models, specifically BioBERT~\cite{lee2020biobert}, to learn contextual representations.
+
+The rest of this paper is organised as follows. Section~\ref{sec:related} reviews related work.
+Section~\ref{sec:method} describes our approach. Section~\ref{sec:experiments} presents experimental
+results. Section~\ref{sec:conclusion} concludes.
+
+\section{Related Work}
+\label{sec:related}
+
+Early approaches to biomedical article indexing relied on TF-IDF weighted bag-of-words representations
+combined with k-nearest neighbours (MTI, \cite{mti}) or SVMs. The introduction of word embeddings,
+such as Word2Vec~\cite{mikolov2013} and fastText~\cite{joulin2017}, improved performance by capturing
+semantic similarity between medical terms.
+
+More recently, transformer-based models pre-trained on large biomedical corpora have shown strong results.
+BioBERT~\cite{lee2020biobert} and SciBERT~\cite{beltagy2019scibert} both extend BERT~\cite{devlin2019bert}
+with domain-specific pre-training and have achieved state-of-the-art performance on multiple biomedical
+NLP benchmarks. In the BioASQ challenge, fine-tuned transformer models consistently outperform shallow
+approaches, with MeSH-CNN~\cite{meshcnn} and AttentionMeSH~\cite{attentionmesh} being notable prior
+systems.
+
+\section{Method}
+\label{sec:method}
+
+\subsection{Problem Formulation}
+
+Given the title $t$ and abstract $a$ of a biomedical article, the goal is to predict a subset
+$\hat{Y} \subseteq L$ of MeSH labels from the full label set $L$.
+This is a multi-label classification problem with $|L|$ binary outputs.
+
+\subsection{Input Representation}
+
+We concatenate title and abstract using the \texttt{[SEP]} token:
+\[
+    x = \texttt{[CLS]}\ t\ \texttt{[SEP]}\ a\ \texttt{[SEP]}
+\]
+The resulting sequence is truncated to 512 tokens, the maximum context length of BERT-based models.
+
+\subsection{Model Architecture}
+
+We fine-tune BioBERT (\texttt{dmis-lab/biobert-base-cased-v1.2}) as our encoder. The \texttt{[CLS]}
+token representation from the final layer is passed through a dropout layer and a linear classification
+head:
+\[
+    \hat{y} = \sigma\!\left(W \cdot \text{Dropout}(h_{\texttt{CLS}})\right)
+\]
+where $W \in \mathbf{R}^{|L| \times d}$, $d = 768$ is the hidden size, and $\sigma$ is the
+sigmoid function applied element-wise. We use binary cross-entropy loss:
+\[
+    L = -\frac{1}{N|L|} \sum_{i=1}^{N} \sum_{j=1}^{|L|}
+    \left[ y_{ij} \log \hat{y}_{ij} + (1 - y_{ij}) \log (1 - \hat{y}_{ij}) \right]
+\]
+
+\subsection{Training Details}
+
+We use the AdamW optimiser with a learning rate of $2 \times 10^{-5}$ and gradient clipping at $1.0$.
+MeSH labels appearing fewer than 10 times in the training set are discarded to reduce the output
+vocabulary and mitigate extreme class imbalance. Labels are predicted at inference time by applying a
+threshold $\tau = 0.5$ to the sigmoid outputs.
+
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Dataset}
+
+We use the BioASQ 2015b Task A training dataset (v.2015b), which contains 4{,}607{,}922 PubMed articles
+annotated with MeSH 2015 terms. Table~\ref{tab:dataset} summarises dataset statistics.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lr}
+\toprule
+\textbf{Statistic} & \textbf{Value} \\
+\midrule
+Total articles & 4{,}607{,}922 \\
+Avg.\ MeSH labels per article & 13.08 \\
+Unique MeSH terms & 26{,}866 \\
+Train / Val split & 90\% / 10\% \\
+\bottomrule
+\end{tabular}
+\caption{BioASQ 2015b dataset statistics.}
+\label{tab:dataset}
+\end{table}
+
+\subsection{Evaluation Metrics}
+
+Following BioASQ evaluation practice, we report micro-averaged F1 (favours frequent labels) and
+macro-averaged F1 (treats all labels equally).
+
+\subsection{Results}
+
+% Fill in after running experiments
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & \textbf{Micro-F1} & \textbf{Macro-F1} \\
+\midrule
+TF-IDF + kNN (baseline) & -- & -- \\
+BioBERT (ours) & -- & -- \\
+\bottomrule
+\end{tabular}
+\caption{Results on the BioASQ 2015b validation set.}
+\label{tab:results}
+\end{table}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented a fine-tuned BioBERT approach for multi-label MeSH term classification on the BioASQ
+Task A dataset. \ldots % fill in after experiments
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
