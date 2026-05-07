@@ -1,8 +1,8 @@
 #!/bin/bash
 # Run all experiments. Execute this on the AIDA server.
-# Usage: bash run_all.sh
+# Usage: bash run_all.sh <path_to_data.json>
 
-DATA="data/allMeSH_limitjournals.json"
+DATA="${1:-data/allMeSH_limitjournals.json}"
 EPOCHS=3
 BATCH=16
 
