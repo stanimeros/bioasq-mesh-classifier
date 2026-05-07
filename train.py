@@ -111,6 +111,12 @@ def main():
             torch.save(model.state_dict(), os.path.join(args.output_dir, "best_model.pt"))
             print(f"  -> Saved best model (micro-F1={best_micro_f1:.4f})")
 
+    # Re-evaluate best model and save results
+    model.load_state_dict(torch.load(os.path.join(args.output_dir, "best_model.pt"), map_location=device))
+    micro_f1, macro_f1 = evaluate(model, val_loader, device, args.threshold)
+    with open(os.path.join(args.output_dir, "results.txt"), "w") as f:
+        f.write(f"micro_f1={micro_f1:.4f}\nmacro_f1={macro_f1:.4f}\n")
+    print(f"Best model | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
     print("Training complete.")
 
 
