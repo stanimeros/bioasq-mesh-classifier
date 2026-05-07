@@ -1,38 +1,29 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[sigconf]{acmart}
 
-\usepackage[margin=2.5cm]{geometry}
 \usepackage{amsmath}
-\usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{hyperref}
-\usepackage{url}
-\usepackage{microtype}
-\usepackage{multicol}
-\usepackage{caption}
-\usepackage{subcaption}
-\usepackage[numbers]{natbib}
 
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue,
-    citecolor=blue,
-    urlcolor=blue
+%% ACM copyright/conference info — adjust if needed
+\setcopyright{none}
+\acmConference[NLP Course]{Natural Language Processing}{2025--26}{University of Macedonia}
+
+\title{Multi-Label MeSH Term Classification of Biomedical Articles Using Pre-trained Language Models}
+
+\author{Panteleimon Stanimeros}
+\affiliation{%
+  \institution{MSc in AI and Data Analytics, University of Macedonia}
+  \city{Thessaloniki}
+  \country{Greece}
 }
+\email{aid26006@uom.edu.gr}
 
-\title{\textbf{Multi-Label MeSH Term Classification of Biomedical Articles\\
-Using Pre-trained Language Models}}
-
-\author{
-    Panteleimon Stanimeros\textsuperscript{1} \quad Nikolaos Strafiotis\textsuperscript{1} \\
-    \textsuperscript{1}MSc in AI and Data Analytics (AIDA), University of Macedonia \\
-    \texttt{\{aid26006, aid26012\}@uom.edu.gr}
+\author{Nikolaos Strafiotis}
+\affiliation{%
+  \institution{MSc in AI and Data Analytics, University of Macedonia}
+  \city{Thessaloniki}
+  \country{Greece}
 }
-
-\date{}
-
-\begin{document}
-
-\maketitle
+\email{aid26012@uom.edu.gr}
 
 \begin{abstract}
 We address the task of automatic MeSH (Medical Subject Headings) term assignment to biomedical articles,
@@ -41,6 +32,12 @@ we fine-tune BioBERT, a domain-specific pre-trained language model, on the BioAS
 We evaluate performance using micro-averaged and macro-averaged F1 scores.
 Our results show that \ldots % fill in after experiments
 \end{abstract}
+
+\keywords{biomedical text classification, multi-label classification, MeSH terms, BioBERT, BioASQ}
+
+\begin{document}
+
+\maketitle
 
 \section{Introduction}
 
@@ -62,7 +59,7 @@ results. Section~\ref{sec:conclusion} concludes.
 \label{sec:related}
 
 Early approaches to biomedical article indexing relied on TF-IDF weighted bag-of-words representations
-combined with k-nearest neighbours (MTI, \cite{mti}) or SVMs. The introduction of word embeddings,
+combined with k-nearest neighbours (MTI,~\cite{mti}) or SVMs. The introduction of word embeddings,
 such as Word2Vec~\cite{mikolov2013} and fastText~\cite{joulin2017}, improved performance by capturing
 semantic similarity between medical terms.
 
@@ -101,7 +98,7 @@ head:
 where $W \in \mathbf{R}^{|L| \times d}$, $d = 768$ is the hidden size, and $\sigma$ is the
 sigmoid function applied element-wise. We use binary cross-entropy loss:
 \[
-    L = -\frac{1}{N|L|} \sum_{i=1}^{N} \sum_{j=1}^{|L|}
+    \mathcal{L} = -\frac{1}{N|L|} \sum_{i=1}^{N} \sum_{j=1}^{|L|}
     \left[ y_{ij} \log \hat{y}_{ij} + (1 - y_{ij}) \log (1 - \hat{y}_{ij}) \right]
 \]
 
@@ -121,7 +118,8 @@ We use the BioASQ 2015b Task A training dataset (v.2015b), which contains 4{,}60
 annotated with MeSH 2015 terms. Table~\ref{tab:dataset} summarises dataset statistics.
 
 \begin{table}[h]
-\centering
+\caption{BioASQ 2015b dataset statistics.}
+\label{tab:dataset}
 \begin{tabular}{lr}
 \toprule
 \textbf{Statistic} & \textbf{Value} \\
@@ -132,8 +130,6 @@ Unique MeSH terms & 26{,}866 \\
 Train / Val split & 90\% / 10\% \\
 \bottomrule
 \end{tabular}
-\caption{BioASQ 2015b dataset statistics.}
-\label{tab:dataset}
 \end{table}
 
 \subsection{Evaluation Metrics}
@@ -145,7 +141,8 @@ macro-averaged F1 (treats all labels equally).
 
 % Fill in after running experiments
 \begin{table}[h]
-\centering
+\caption{Results on the BioASQ 2015b validation set.}
+\label{tab:results}
 \begin{tabular}{lcc}
 \toprule
 \textbf{Model} & \textbf{Micro-F1} & \textbf{Macro-F1} \\
@@ -154,8 +151,6 @@ TF-IDF + kNN (baseline) & -- & -- \\
 BioBERT (ours) & -- & -- \\
 \bottomrule
 \end{tabular}
-\caption{Results on the BioASQ 2015b validation set.}
-\label{tab:results}
 \end{table}
 
 \section{Conclusion}
@@ -164,7 +159,7 @@ BioBERT (ours) & -- & -- \\
 We presented a fine-tuned BioBERT approach for multi-label MeSH term classification on the BioASQ
 Task A dataset. \ldots % fill in after experiments
 
-\bibliographystyle{plainnat}
+\bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
 
 \end{document}
