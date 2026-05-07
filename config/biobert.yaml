@@ -1,0 +1,16 @@
+data: data/allMeSH_limitjournals.json
+output_dir: output/biobert
+max_articles: null
+min_label_count: 10
+val_split: 0.1
+
+# Model
+model_name: dmis-lab/biobert-base-cased-v1.2
+max_length: 512
+
+# Training
+epochs: 3
+batch_size: 16
+lr: 2.0e-5
+threshold: 0.5
+dropout: 0.1

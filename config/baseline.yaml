@@ -1,0 +1,15 @@
+data: data/allMeSH_limitjournals.json
+output_dir: output/baseline
+max_articles: null
+min_label_count: 10
+val_split: 0.1
+
+# Word2Vec
+w2v_dim: 200
+w2v_epochs: 5
+w2v_window: 5
+w2v_min_count: 2
+
+# MLP
+mlp_hidden_layers: [512]
+mlp_max_iter: 20
