@@ -14,7 +14,7 @@ def load_bioasq_data(path, max_articles=None):
     """
     import json
     texts, label_lists = [], []
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8", errors="replace") as f:
         for line in tqdm(f, desc="Loading", unit=" lines"):
             line = line.strip().rstrip(",")
             if not line.startswith("{"):
