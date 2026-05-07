@@ -1,49 +1,79 @@
 This is BibTeX, Version 0.99e (TeX Live 2026)
 Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
-The style file: plainnat.bst
+The style file: ACM-Reference-Format.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
 Database file #1: references.bib
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 9000 items from 6000.
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Warning--empty publisher in beltagy2019scibert
+Warning--empty address in beltagy2019scibert
+Warning--page numbers missing in both pages and numpages fields in beltagy2019scibert
+Warning--empty publisher in devlin2019bert
+Warning--empty address in devlin2019bert
+Warning--page numbers missing in both pages and numpages fields in devlin2019bert
+Warning--empty publisher in meshcnn
+Warning--empty address in meshcnn
+Warning--page numbers missing in both pages and numpages fields in meshcnn
+Warning--no number and no volume in joulin2017
+Warning--page numbers missing in both pages and numpages fields in joulin2017
+Warning--empty publisher in mikolov2013
+Warning--empty address in mikolov2013
+Warning--page numbers missing in both pages and numpages fields in mikolov2013
 Warning--empty year in mti
+Warning--using n.d. in mti
+Warning--empty publisher in attentionmesh
+Warning--empty address in attentionmesh
+Warning--page numbers missing in both pages and numpages fields in attentionmesh
 Warning--can't use both volume and number fields in bioasq2015
+Warning--empty publisher in bioasq2015
+Warning--empty address in bioasq2015
+Warning--page numbers missing in both pages and numpages fields in bioasq2015
 You've used 9 entries,
-            2773 wiz_defined-function locations,
-            636 strings with 6263 characters,
-and the built_in function-call counts, 4206 in all, are:
-= -- 329
-> -- 301
-< -- 4
-+ -- 102
-- -- 93
-* -- 335
-:= -- 657
-add.period$ -- 27
+            6273 wiz_defined-function locations,
+            1560 strings with 19561 characters,
+and the built_in function-call counts, 9386 in all, are:
+= -- 1014
+> -- 329
+< -- 0
++ -- 112
+- -- 113
+* -- 653
+:= -- 914
+add.period$ -- 38
 call.type$ -- 9
-change.case$ -- 55
+change.case$ -- 64
 chr.to.int$ -- 9
-cite$ -- 20
-duplicate$ -- 198
-empty$ -- 351
-format.name$ -- 104
-if$ -- 872
-int.to.chr$ -- 1
+cite$ -- 32
+duplicate$ -- 887
+empty$ -- 633
+format.name$ -- 137
+if$ -- 2253
+int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 8
-newline$ -- 53
-num.names$ -- 36
-pop$ -- 137
+missing$ -- 38
+newline$ -- 108
+num.names$ -- 63
+pop$ -- 460
 preamble$ -- 1
-purify$ -- 46
+purify$ -- 131
 quote$ -- 0
-skip$ -- 144
+skip$ -- 306
 stack$ -- 0
-substring$ -- 49
-swap$ -- 17
-text.length$ -- 1
+substring$ -- 521
+swap$ -- 53
+text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 99
-warning$ -- 2
-while$ -- 29
+type$ -- 242
+warning$ -- 23
+while$ -- 42
 width$ -- 0
-write$ -- 116
-(There were 2 warnings)
+write$ -- 198
+(There were 23 warnings)
