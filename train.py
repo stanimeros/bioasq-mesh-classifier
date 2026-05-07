@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument("--threshold", type=float, default=0.5)
     parser.add_argument("--output_dir", default="output")
     parser.add_argument("--val_split", type=float, default=0.1)
+    parser.add_argument("--max_articles", type=int, default=None, help="Cap articles for smoke testing")
     return parser.parse_args()
 
 
@@ -56,7 +57,7 @@ def main():
     print(f"Using device: {device}")
 
     print("Loading data...")
-    texts, label_lists = load_bioasq_data(args.data)
+    texts, label_lists = load_bioasq_data(args.data, max_articles=args.max_articles)
     print(f"Loaded {len(texts)} articles")
 
     vocab = build_label_vocab(label_lists, min_count=args.min_label_count)
