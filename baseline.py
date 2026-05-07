@@ -9,7 +9,6 @@ import yaml
 from gensim.models import Word2Vec
 from gensim.utils import simple_preprocess
 from sklearn.neural_network import MLPClassifier
-from sklearn.multiclass import OneVsRestClassifier
 
 from dataset import load_bioasq_data, build_label_vocab
 from evaluate import evaluate_sklearn, save_results
@@ -90,10 +89,7 @@ def main():
     print(f"Train: {len(X_train)}, Val: {len(X_val)}")
 
     print("Training MLP classifier...")
-    clf = OneVsRestClassifier(
-        MLPClassifier(hidden_layer_sizes=tuple(cfg["mlp_hidden_layers"]), max_iter=cfg["mlp_max_iter"]),
-        n_jobs=-1,
-    )
+    clf = MLPClassifier(hidden_layer_sizes=tuple(cfg["mlp_hidden_layers"]), max_iter=cfg["mlp_max_iter"])
     clf.fit(X_train, Y_train)
 
     micro_f1, macro_f1 = evaluate_sklearn(clf, X_val, Y_val)

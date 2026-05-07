@@ -40,14 +40,16 @@ def load_bioasq_data(path, max_articles=None):
 
         def __exit__(self, *args):
             self._f.close()
+            if hasattr(self, '_zf'):
+                self._zf.close()
 
     def open_json(path):
         if zipfile.is_zipfile(path):
             zf = zipfile.ZipFile(path, "r")
             name = next(n for n in zf.namelist() if n.endswith(".json"))
-            raw = zf.open(name).read()
-            cleaned = raw.decode("utf-8", errors="replace").encode("utf-8")
-            return io.BytesIO(cleaned)
+            stream = Utf8CleanStream(zf.open(name))
+            stream._zf = zf  # keep ZipFile alive until stream is closed
+            return stream
         else:
             return Utf8CleanStream(open(path, "rb"))
 
