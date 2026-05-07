@@ -4,15 +4,16 @@
 # Run detached:  nohup ./run_all.sh >> run_all.log 2>&1 & disown
 
 DATA="${1:-data/allMeSH_2022.json}"
+export PYTHONUNBUFFERED=1
 
 echo "=== [1/3] Word2Vec + MLP baseline ==="
-python baseline.py --config config/baseline.yaml --data $DATA
+python -u baseline.py --config config/baseline.yaml --data $DATA
 
 echo "=== [2/3] BioBERT ==="
-python train.py --config config/biobert.yaml --data $DATA
+python -u train.py --config config/biobert.yaml --data $DATA
 
 echo "=== [3/3] SciBERT ==="
-python train.py --config config/scibert.yaml --data $DATA
+python -u train.py --config config/scibert.yaml --data $DATA
 
 echo "=== All done. Results: ==="
 for dir in output/baseline output/biobert output/scibert; do
