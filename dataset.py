@@ -6,23 +6,15 @@ from tqdm import tqdm
 
 
 def load_bioasq_data(path, max_articles=None):
-    """Line-by-line parser for BioASQ format.
+    """Streaming parser for BioASQ allMeSH JSON format.
 
-    The file wrapper uses non-standard JSON (single quotes, '=' separator),
-    but each article line is valid JSON. We skip the header/footer and parse
-    each line individually.
+    Uses ijson to stream articles from the top-level 'articles' array
+    without loading the entire file into memory.
     """
-    import json
     texts, label_lists = [], []
-    with open(path, "r", encoding="utf-8", errors="replace") as f:
-        for line in tqdm(f, desc="Loading", unit=" lines"):
-            line = line.strip().rstrip(",")
-            if not line.startswith("{"):
-                continue
-            try:
-                article = json.loads(line)
-            except json.JSONDecodeError:
-                continue
+    with open(path, "rb") as f:
+        articles_iter = ijson.items(f, "articles.item", use_float=True)
+        for article in tqdm(articles_iter, desc="Loading", unit=" articles"):
             title = article.get("title", "")
             abstract = article.get("abstractText", "")
             mesh_labels = article.get("meshMajor", [])
