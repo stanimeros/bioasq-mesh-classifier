@@ -12,13 +12,19 @@ def load_bioasq_data(path, max_articles=None):
     Uses ijson to stream articles from the top-level 'articles' array.
     """
     import zipfile
+    import io
 
     def open_json(path):
         if zipfile.is_zipfile(path):
             zf = zipfile.ZipFile(path, "r")
             name = next(n for n in zf.namelist() if n.endswith(".json"))
-            return zf.open(name)
-        return open(path, "rb")
+            raw = zf.open(name).read()
+        else:
+            with open(path, "rb") as f:
+                raw = f.read()
+        # Replace invalid UTF-8 bytes so ijson doesn't choke
+        cleaned = raw.decode("utf-8", errors="replace").encode("utf-8")
+        return io.BytesIO(cleaned)
 
     texts, label_lists = [], []
     with open_json(path) as f:
