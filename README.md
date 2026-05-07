@@ -14,7 +14,7 @@ pip install -r requirements.txt
 
 ```bash
 # Train
-python train.py --data data/allMeSH_limitjournals.json --output_dir output/
+python train.py --config config/scibert.yaml --data data/allMeSH_2022.json
 
 # Predict
 python predict.py --data data/test.json --output_dir output/

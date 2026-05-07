@@ -2,7 +2,7 @@
 # Run all experiments. Execute this on the AIDA server.
 # Usage: bash run_all.sh [data_path]
 
-DATA="${1:-data/allMeSH_limitjournals.json}"
+DATA="${1:-data/allMeSH_2022.json}"
 
 echo "=== [1/3] Word2Vec + MLP baseline ==="
 python baseline.py --config config/baseline.yaml --data $DATA

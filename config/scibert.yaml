@@ -1,4 +1,4 @@
-data: data/allMeSH_limitjournals.json
+data: data/allMeSH_2022.json
 output_dir: output/scibert
 max_articles: null
 min_label_count: 10
