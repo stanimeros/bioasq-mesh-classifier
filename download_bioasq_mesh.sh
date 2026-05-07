@@ -10,6 +10,7 @@
 #   BIOASQ_OUTPUT   output path (default: data/allMeSH_2022.json)
 #   BIOASQ_COOKIE   cookie jar path (default: data/.bioasq_cookies.txt)
 #   BIOASQ_DEBUG    set to 1 to print HTTP status line and snippet of login response on failures
+#   BIOASQ_QUIET    set to 1 to silence the dataset download progress bar (default: progress on stderr)
 
 set -euo pipefail
 
@@ -120,12 +121,23 @@ curl -sS -L -c "$COOKIE_JAR" -b "$COOKIE_JAR" \
   "$LOGIN_URL" -o /dev/null
 
 echo "Downloading allMeSH dataset..."
-curl -sS -L -c "$COOKIE_JAR" -b "$COOKIE_JAR" \
-  -e "${BASE_URL}/" \
-  -H "Referer: ${BASE_URL}/" \
-  -H "User-Agent: ${UA}" \
-  "$DOWNLOAD_URL" \
-  -o "$OUT"
+if [[ "${BIOASQ_QUIET:-0}" == "1" ]]; then
+  curl -sS -L -c "$COOKIE_JAR" -b "$COOKIE_JAR" \
+    -e "${BASE_URL}/" \
+    -H "Referer: ${BASE_URL}/" \
+    -H "User-Agent: ${UA}" \
+    "$DOWNLOAD_URL" \
+    -o "$OUT"
+else
+  # --progress-bar: single-line transfer meter on stderr (body still goes only to OUT)
+  curl --progress-bar -S -L -c "$COOKIE_JAR" -b "$COOKIE_JAR" \
+    -e "${BASE_URL}/" \
+    -H "Referer: ${BASE_URL}/" \
+    -H "User-Agent: ${UA}" \
+    "$DOWNLOAD_URL" \
+    -o "$OUT"
+  echo >&2
+fi
 
 SAMPLE="$(head -c 500 "$OUT")"
 if [[ "$SAMPLE" == *"<!DOCTYPE"* ]] || [[ "$SAMPLE" == *"<html"* ]]; then
