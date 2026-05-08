@@ -1,6 +1,6 @@
 data: data/allMeSH_2022.json
 output_dir: output/biobert
-max_articles: 50000
+max_articles: 1600000
 min_label_count: 100
 val_split: 0.1
 test_split: 0.1
@@ -10,7 +10,7 @@ model_name: dmis-lab/biobert-base-cased-v1.2
 max_length: 512
 
 # Training
-epochs: 10
+epochs: 20
 early_stopping_patience: 3
 batch_size: 16
 lr: 2.0e-5

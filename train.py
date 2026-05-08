@@ -5,6 +5,7 @@ import pickle
 import torch
 import torch.nn as nn
 import yaml
+import wandb
 from torch.utils.data import DataLoader, random_split
 from transformers import AutoTokenizer
 from tqdm import tqdm
@@ -35,6 +36,9 @@ def main():
     os.makedirs(cfg["output_dir"], exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
+
+    run_name = os.path.basename(cfg["output_dir"])
+    wandb.init(project="bioasq-mesh-classifier", name=run_name, config=cfg)
 
     print("Loading data...")
     texts, label_lists = load_bioasq_data(cfg["data"], max_articles=cfg.get("max_articles"))
@@ -89,6 +93,7 @@ def main():
         avg_loss = total_loss / len(train_loader)
         micro_f1, macro_f1 = evaluate_transformer(model, val_loader, device, cfg["threshold"])
         print(f"Epoch {epoch+1}: loss={avg_loss:.4f} | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
+        wandb.log({"epoch": epoch + 1, "train_loss": avg_loss, "val_micro_f1": micro_f1, "val_macro_f1": macro_f1})
 
         if micro_f1 > best_micro_f1:
             best_micro_f1 = micro_f1
@@ -105,6 +110,8 @@ def main():
     micro_f1, macro_f1 = evaluate_transformer(model, test_loader, device, cfg["threshold"])
     save_results(cfg["output_dir"], micro_f1, macro_f1)
     print(f"Test | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
+    wandb.log({"test_micro_f1": micro_f1, "test_macro_f1": macro_f1})
+    wandb.finish()
     print("Training complete.")
 
 
