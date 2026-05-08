@@ -11,7 +11,7 @@ source .venv/bin/activate
 DATA="${1:-data/allMeSH_2022.json}"
 SAMPLE="data/sample.json"
 SMOKE="data/smoke.json"
-MAX_ARTICLES="${MAX_ARTICLES:-800000}"
+MAX_ARTICLES="${MAX_ARTICLES:-400000}"
 export PYTHONUNBUFFERED=1
 
 mkdir -p logs
