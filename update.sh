@@ -9,4 +9,5 @@ git fetch origin
 git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
 git clean -fd
 
+chmod +x run_all.sh update.sh
 echo "=== Done ==="
