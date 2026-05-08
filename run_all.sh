@@ -11,7 +11,7 @@ git fetch origin
 git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
 
 echo "=== Activating venv ==="
-source venv/bin/activate
+source .venv/bin/activate
 
 DATA="${1:-data/allMeSH_2022.json}"
 export PYTHONUNBUFFERED=1
