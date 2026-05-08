@@ -67,6 +67,9 @@ def main():
     criterion = nn.BCEWithLogitsLoss()
 
     best_micro_f1 = 0.0
+    patience = cfg.get("early_stopping_patience", 0)
+    epochs_without_improvement = 0
+
     for epoch in range(cfg["epochs"]):
         model.train()
         total_loss = 0.0
@@ -89,8 +92,14 @@ def main():
 
         if micro_f1 > best_micro_f1:
             best_micro_f1 = micro_f1
+            epochs_without_improvement = 0
             torch.save(model.state_dict(), os.path.join(cfg["output_dir"], "best_model.pt"))
             print(f"  -> Saved best model (micro-F1={best_micro_f1:.4f})")
+        else:
+            epochs_without_improvement += 1
+            if patience and epochs_without_improvement >= patience:
+                print(f"  -> Early stopping after {epoch+1} epochs (no improvement for {patience} epochs)")
+                break
 
     model.load_state_dict(torch.load(os.path.join(cfg["output_dir"], "best_model.pt"), map_location=device))
     micro_f1, macro_f1 = evaluate_transformer(model, test_loader, device, cfg["threshold"])
