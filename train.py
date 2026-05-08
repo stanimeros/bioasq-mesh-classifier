@@ -52,13 +52,15 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(cfg["model_name"])
     dataset = BioASQDataset(texts, label_vecs, tokenizer, max_length=cfg["max_length"])
 
+    test_size = int(len(dataset) * cfg.get("test_split", 0.1))
     val_size = int(len(dataset) * cfg["val_split"])
-    train_size = len(dataset) - val_size
-    train_set, val_set = random_split(dataset, [train_size, val_size])
-    print(f"Train: {train_size}, Val: {val_size}")
+    train_size = len(dataset) - val_size - test_size
+    train_set, val_set, test_set = random_split(dataset, [train_size, val_size, test_size])
+    print(f"Train: {train_size}, Val: {val_size}, Test: {test_size}")
 
     train_loader = DataLoader(train_set, batch_size=cfg["batch_size"], shuffle=True, num_workers=4, pin_memory=True)
     val_loader = DataLoader(val_set, batch_size=cfg["batch_size"], num_workers=4, pin_memory=True)
+    test_loader = DataLoader(test_set, batch_size=cfg["batch_size"], num_workers=4, pin_memory=True)
 
     model = BioASQClassifier(cfg["model_name"], num_labels=len(vocab), dropout=cfg["dropout"]).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=cfg["lr"])
@@ -91,9 +93,9 @@ def main():
             print(f"  -> Saved best model (micro-F1={best_micro_f1:.4f})")
 
     model.load_state_dict(torch.load(os.path.join(cfg["output_dir"], "best_model.pt"), map_location=device))
-    micro_f1, macro_f1 = evaluate_transformer(model, val_loader, device, cfg["threshold"])
+    micro_f1, macro_f1 = evaluate_transformer(model, test_loader, device, cfg["threshold"])
     save_results(cfg["output_dir"], micro_f1, macro_f1)
-    print(f"Best | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
+    print(f"Test | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
     print("Training complete.")
 
 

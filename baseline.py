@@ -83,16 +83,24 @@ def main():
     X = embed(tokenized, w2v)
     Y = encode_labels_np(label_lists, vocab)
 
-    split = int(len(X) * (1 - cfg["val_split"]))
-    X_train, X_val = X[:split], X[split:]
-    Y_train, Y_val = Y[:split], Y[split:]
-    print(f"Train: {len(X_train)}, Val: {len(X_val)}")
+    n = len(X)
+    test_size = int(n * cfg.get("test_split", 0.1))
+    val_size = int(n * cfg["val_split"])
+    train_size = n - val_size - test_size
+    # Shuffle before splitting so the sequential slice is representative
+    rng = np.random.default_rng(42)
+    idx = rng.permutation(n)
+    X, Y = X[idx], Y[idx]
+    X_train, Y_train = X[:train_size], Y[:train_size]
+    X_val,   Y_val   = X[train_size:train_size + val_size], Y[train_size:train_size + val_size]
+    X_test,  Y_test  = X[train_size + val_size:], Y[train_size + val_size:]
+    print(f"Train: {train_size}, Val: {val_size}, Test: {test_size}")
 
     print("Training MLP classifier...")
     clf = MLPClassifier(hidden_layer_sizes=tuple(cfg["mlp_hidden_layers"]), max_iter=cfg["mlp_max_iter"])
     clf.fit(X_train, Y_train)
 
-    micro_f1, macro_f1 = evaluate_sklearn(clf, X_val, Y_val)
+    micro_f1, macro_f1 = evaluate_sklearn(clf, X_test, Y_test)
     save_results(cfg["output_dir"], micro_f1, macro_f1)
     print(f"Word2Vec + MLP | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
 

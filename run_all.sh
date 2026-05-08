@@ -14,16 +14,20 @@ echo "=== Activating venv ==="
 source .venv/bin/activate
 
 DATA="${1:-data/allMeSH_2022.json}"
+SAMPLE="data/sample.json"
 export PYTHONUNBUFFERED=1
 
+echo "=== [0/3] Sampling ==="
+python -u sample.py --data $DATA --out $SAMPLE
+
 echo "=== [1/3] Word2Vec + MLP baseline ==="
-python -u baseline.py --config config/baseline.yaml --data $DATA
+python -u baseline.py --config config/baseline.yaml --data $SAMPLE
 
 echo "=== [2/3] BioBERT ==="
-python -u train.py --config config/biobert.yaml --data $DATA
+python -u train.py --config config/biobert.yaml --data $SAMPLE
 
 echo "=== [3/3] SciBERT ==="
-python -u train.py --config config/scibert.yaml --data $DATA
+python -u train.py --config config/scibert.yaml --data $SAMPLE
 
 echo "=== All done. Results: ==="
 for dir in output/baseline output/biobert output/scibert; do

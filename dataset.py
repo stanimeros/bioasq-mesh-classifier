@@ -58,6 +58,26 @@ def load_bioasq_data(path, max_articles=None, seed=42):
         else:
             return Utf8CleanStream(open(path, "rb"))
 
+    # Fast path: pre-sampled JSON produced by sample.py.
+    # Detected by checking the first article for a "text" key (vs "title"/"abstractText").
+    import json as _json
+    is_sampled = False
+    if not zipfile.is_zipfile(path):
+        try:
+            with open(path) as _f:
+                head = _json.load(_f)
+            first_article = head.get("articles", [{}])[0]
+            if "text" in first_article:
+                is_sampled = True
+                texts = [a["text"] for a in head["articles"]]
+                labels = [a["meshMajor"] for a in head["articles"]]
+        except Exception:
+            is_sampled = False
+
+    if is_sampled:
+        print(f"Loaded {len(texts)} pre-sampled articles from {path}")
+        return texts, labels
+
     rng = random.Random(seed)
     reservoir_texts, reservoir_labels = [], []
     seen = 0  # valid articles seen so far
@@ -78,7 +98,6 @@ def load_bioasq_data(path, max_articles=None, seed=42):
                 reservoir_texts.append(text)
                 reservoir_labels.append(mesh_labels)
             elif len(reservoir_texts) < max_articles:
-                # Fill the reservoir first
                 reservoir_texts.append(text)
                 reservoir_labels.append(mesh_labels)
             else:
