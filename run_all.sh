@@ -18,7 +18,7 @@ SAMPLE="data/sample.json"
 export PYTHONUNBUFFERED=1
 
 echo "=== [0/3] Sampling ==="
-python -u sample.py --data $DATA --out $SAMPLE
+python -u sample.py --data $DATA --out $SAMPLE --config config/biobert.yaml
 
 echo "=== [1/3] Word2Vec + MLP baseline ==="
 python -u baseline.py --config config/baseline.yaml --data $SAMPLE
