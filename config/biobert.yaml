@@ -1,6 +1,6 @@
 data: data/allMeSH_2022.json
 output_dir: output/biobert
-max_articles: 200000
+max_articles: 10000
 min_label_count: 50
 val_split: 0.1
 

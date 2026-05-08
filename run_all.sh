@@ -2,6 +2,7 @@
 # Run all experiments. Execute this on the AIDA server.
 # Usage: bash run_all.sh [data_path]
 # Run detached:  nohup ./run_all.sh >> run_all.log 2>&1 & disown
+# Tail logs:    tail -f run_all.log
 
 DATA="${1:-data/allMeSH_2022.json}"
 export PYTHONUNBUFFERED=1

@@ -1,15 +1,20 @@
 import torch
 import ijson
+import random
 from torch.utils.data import Dataset
 from collections import Counter
 from tqdm import tqdm
 
 
-def load_bioasq_data(path, max_articles=None):
+def load_bioasq_data(path, max_articles=None, seed=42):
     """Streaming parser for BioASQ allMeSH JSON format.
 
     Handles both plain JSON and ZIP-compressed JSON (BioASQ distribution format).
     Uses ijson to stream articles from the top-level 'articles' array.
+
+    When max_articles is set, reservoir sampling is used so that every article
+    in the file has an equal probability of being included, avoiding the bias
+    of simply taking the first N entries.
     """
     import zipfile
     import io
@@ -53,19 +58,37 @@ def load_bioasq_data(path, max_articles=None):
         else:
             return Utf8CleanStream(open(path, "rb"))
 
-    texts, label_lists = [], []
+    rng = random.Random(seed)
+    reservoir_texts, reservoir_labels = [], []
+    seen = 0  # valid articles seen so far
+
     with open_json(path) as f:
         articles_iter = ijson.items(f, "articles.item", use_float=True)
         for article in tqdm(articles_iter, desc="Loading", unit=" articles"):
             title = article.get("title", "")
             abstract = article.get("abstractText", "")
             mesh_labels = article.get("meshMajor", [])
-            if mesh_labels and (title or abstract):
-                texts.append(title + " [SEP] " + abstract)
-                label_lists.append(mesh_labels)
-            if max_articles and len(texts) >= max_articles:
-                break
-    return texts, label_lists
+            if not (mesh_labels and (title or abstract)):
+                continue
+
+            text = title + " [SEP] " + abstract
+            seen += 1
+
+            if max_articles is None:
+                reservoir_texts.append(text)
+                reservoir_labels.append(mesh_labels)
+            elif len(reservoir_texts) < max_articles:
+                # Fill the reservoir first
+                reservoir_texts.append(text)
+                reservoir_labels.append(mesh_labels)
+            else:
+                # Reservoir sampling: replace a random slot with probability k/seen
+                j = rng.randint(0, seen - 1)
+                if j < max_articles:
+                    reservoir_texts[j] = text
+                    reservoir_labels[j] = mesh_labels
+
+    return reservoir_texts, reservoir_labels
 
 
 def build_label_vocab(label_lists, min_count=10):
