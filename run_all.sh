@@ -1,6 +1,7 @@
 #!/bin/bash
 # Run all experiments. Execute this on the AIDA server.
 # Usage: bash run_all.sh [data_path]
+# Give execute permission:  chmod +x run_all.sh
 # Run detached:  nohup ./run_all.sh >> run_all.log 2>&1 & disown
 # Tail logs:    tail -f run_all.log
 
