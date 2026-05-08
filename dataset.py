@@ -117,24 +117,22 @@ def build_label_vocab(label_lists, min_count=10):
 
 
 def encode_labels(label_lists, vocab):
-    n = len(vocab)
+    """Store labels as lists of indices (sparse) to avoid OOM with large datasets."""
     encoded = []
     for labels in label_lists:
-        vec = torch.zeros(n)
-        for label in labels:
-            if label in vocab:
-                vec[vocab[label]] = 1.0
-        encoded.append(vec)
+        indices = [vocab[label] for label in labels if label in vocab]
+        encoded.append(indices)
     return encoded
 
 
 class BioASQDataset(Dataset):
-    """Lazy-tokenizing dataset — tokenization happens per sample to avoid OOM."""
+    """Lazy-tokenizing dataset — tokenization and label encoding happen per sample to avoid OOM."""
 
-    def __init__(self, texts, label_vecs, tokenizer, max_length=512):
+    def __init__(self, texts, label_indices, tokenizer, num_labels, max_length=512):
         self.texts = texts
-        self.labels = label_vecs
+        self.label_indices = label_indices
         self.tokenizer = tokenizer
+        self.num_labels = num_labels
         self.max_length = max_length
 
     def __len__(self):
@@ -148,8 +146,11 @@ class BioASQDataset(Dataset):
             max_length=self.max_length,
             return_tensors="pt",
         )
+        vec = torch.zeros(self.num_labels)
+        for i in self.label_indices[idx]:
+            vec[i] = 1.0
         return {
             "input_ids": enc["input_ids"].squeeze(0),
             "attention_mask": enc["attention_mask"].squeeze(0),
-            "labels": self.labels[idx],
+            "labels": vec,
         }

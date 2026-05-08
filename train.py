@@ -54,7 +54,7 @@ def main():
 
     print(f"Loading tokenizer: {cfg['model_name']}")
     tokenizer = AutoTokenizer.from_pretrained(cfg["model_name"])
-    dataset = BioASQDataset(texts, label_vecs, tokenizer, max_length=cfg["max_length"])
+    dataset = BioASQDataset(texts, label_vecs, tokenizer, num_labels=len(vocab), max_length=cfg["max_length"])
 
     test_size = int(len(dataset) * cfg.get("test_split", 0.1))
     val_size = int(len(dataset) * cfg["val_split"])
