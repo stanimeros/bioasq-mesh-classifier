@@ -4,6 +4,15 @@
 # Run detached:  nohup ./run_all.sh >> run_all.log 2>&1 & disown
 # Tail logs:    tail -f run_all.log
 
+set -e
+
+echo "=== Resetting to origin ==="
+git fetch origin
+git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
+
+echo "=== Activating venv ==="
+source venv/bin/activate
+
 DATA="${1:-data/allMeSH_2022.json}"
 export PYTHONUNBUFFERED=1
 
