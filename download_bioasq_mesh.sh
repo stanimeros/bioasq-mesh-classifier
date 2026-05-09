@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Log in to BioASQ participants area (Django CSRF + Referer) and download Task 10a allMeSH JSON.
+# Download full BioASQ Task 10a allMeSH JSON via participant login (CSRF + Referer).
 #
 # Usage:
 #   export BIOASQ_USERNAME='your_user'

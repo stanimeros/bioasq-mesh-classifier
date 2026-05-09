@@ -20,6 +20,7 @@ def parse_args():
     parser.add_argument("--config", required=True, help="Path to YAML config file")
     parser.add_argument("--data", default=None, help="Override data path")
     parser.add_argument("--max_articles", type=int, default=None, help="Cap articles (smoke test)")
+    parser.add_argument("--no_wandb", action="store_true", help="Disable Weights & Biases (e.g. smoke runs)")
     return parser.parse_args()
 
 
@@ -38,7 +39,10 @@ def main():
     print(f"Using device: {device}")
 
     run_name = os.path.basename(cfg["output_dir"])
-    wandb.init(project="bioasq-mesh-classifier", name=run_name, config=cfg)
+    wandb_kwargs = {"project": "bioasq-mesh-classifier", "name": run_name, "config": cfg}
+    if args.no_wandb:
+        wandb_kwargs["mode"] = "disabled"
+    wandb.init(**wandb_kwargs)
 
     print("Loading data...")
     texts, label_lists = load_bioasq_data(cfg["data"], max_articles=cfg.get("max_articles"))

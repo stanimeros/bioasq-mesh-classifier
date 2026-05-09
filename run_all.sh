@@ -1,13 +1,15 @@
 #!/bin/bash
-# [1/2] Smoke: run baseline + BioBERT + SciBERT on smoke.json, wait for all to finish.
-# [2/2] Full: wipe smoke outputs, then start the same three jobs on sample.json (nohup, no wait).
+# Run training pipeline in two stages:
+#   [1/2] Smoke — baseline + BioBERT + SciBERT on smoke.json; wait until all finish.
+#         Transformer jobs use train.py --no_wandb (no W&B uploads).
+#   [2/2] Full — remove smoke outputs, then start the same three jobs on sample.json (nohup).
 #
-# Build JSONs first: bash create_sample.sh
+# Prerequisites: create_sample.sh has produced data/smoke.json and data/sample.json.
 #
 # Usage:
 #   bash run_all.sh
 #   bash run_all.sh path/to/smoke.json path/to/sample.json
-# Env (defaults if no matching positional arg): SMOKE, SAMPLE
+# Env: SMOKE, SAMPLE (defaults data/smoke.json, data/sample.json)
 #
 # Detached: nohup ./run_all.sh >> run_all.log 2>&1 & disown
 #
@@ -15,7 +17,7 @@
 #   Smoke: logs/smoke_baseline.log logs/smoke_biobert.log logs/smoke_scibert.log
 #   Full:  logs/baseline.log logs/biobert.log logs/scibert.log
 #
-# Follow smoke + full:
+# Follow:
 #   tail -f run_all.log logs/smoke_*.log logs/baseline.log logs/biobert.log logs/scibert.log
 
 set -e
@@ -45,9 +47,9 @@ echo "  tail -f run_all.log logs/smoke_baseline.log logs/smoke_biobert.log logs/
 
 nohup python -u baseline.py --config config/baseline.yaml --data "$SMOKE" > logs/smoke_baseline.log 2>&1 &
 PID1=$!
-nohup python -u train.py    --config config/biobert.yaml  --data "$SMOKE" > logs/smoke_biobert.log  2>&1 &
+nohup python -u train.py --no_wandb --config config/biobert.yaml  --data "$SMOKE" > logs/smoke_biobert.log  2>&1 &
 PID2=$!
-nohup python -u train.py    --config config/scibert.yaml --data "$SMOKE" > logs/smoke_scibert.log 2>&1 &
+nohup python -u train.py --no_wandb --config config/scibert.yaml --data "$SMOKE" > logs/smoke_scibert.log 2>&1 &
 PID3=$!
 
 echo "  PIDs: baseline=$PID1 biobert=$PID2 scibert=$PID3"

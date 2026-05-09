@@ -1,12 +1,13 @@
 #!/bin/bash
-# Build training subsets without scanning the full corpus twice for smoke:
-#   1) Stream full BioASQ once -> sample.json (default 400k)
-#   2) Shuffle subsample from sample.json -> smoke.json (default 1k)
+# Build the two JSON subsets used by run_all.sh from the full BioASQ file:
+#   1) sample.json — reservoir sample from allMeSH (default 400k articles)
+#   2) smoke.json — random subset from sample.json only (default 1k; no second full scan)
+#
+# Prerequisites: full corpus on disk (see download_bioasq_mesh.sh). Requires venv (see setup.sh).
 #
 # Usage:
 #   bash create_sample.sh [path/to/allMeSH.json]
-# Env overrides:
-#   SAMPLE=data/sample.json SMOKE=data/smoke.json MAX_ARTICLES=400000 SMOKE_ARTICLES=1000 SEED=42
+# Env: SAMPLE, SMOKE, MAX_ARTICLES, SMOKE_ARTICLES, SEED
 
 set -e
 
