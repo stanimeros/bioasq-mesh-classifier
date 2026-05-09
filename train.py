@@ -70,7 +70,10 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=cfg["lr"])
     criterion = nn.BCEWithLogitsLoss()
 
-    best_micro_f1 = 0.0
+    best_path = os.path.join(cfg["output_dir"], "best_model.pt")
+    # First epoch must be able to beat this; otherwise tiny/smoke runs may never save a checkpoint
+    # (e.g. val micro-F1 stays 0.0) and test eval would crash on a missing file.
+    best_micro_f1 = float("-inf")
     patience = cfg.get("early_stopping_patience", 0)
     epochs_without_improvement = 0
 
@@ -98,7 +101,7 @@ def main():
         if micro_f1 > best_micro_f1:
             best_micro_f1 = micro_f1
             epochs_without_improvement = 0
-            torch.save(model.state_dict(), os.path.join(cfg["output_dir"], "best_model.pt"))
+            torch.save(model.state_dict(), best_path)
             print(f"  -> Saved best model (micro-F1={best_micro_f1:.4f})")
         else:
             epochs_without_improvement += 1
@@ -106,7 +109,10 @@ def main():
                 print(f"  -> Early stopping after {epoch+1} epochs (no improvement for {patience} epochs)")
                 break
 
-    model.load_state_dict(torch.load(os.path.join(cfg["output_dir"], "best_model.pt"), map_location=device))
+    if os.path.isfile(best_path):
+        model.load_state_dict(torch.load(best_path, map_location=device))
+    else:
+        print("Warning: no best checkpoint saved; evaluating last-epoch weights.")
     micro_f1, macro_f1 = evaluate_transformer(model, test_loader, device, cfg["threshold"])
     save_results(cfg["output_dir"], micro_f1, macro_f1)
     print(f"Test | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
