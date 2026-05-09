@@ -43,6 +43,7 @@ def main():
     if args.no_wandb:
         wandb_kwargs["mode"] = "disabled"
     wandb.init(**wandb_kwargs)
+    wandb.define_metric("*", step_metric="epoch")
 
     print("Loading data...")
     texts, label_lists = load_bioasq_data(cfg["data"], max_articles=cfg.get("max_articles"))
@@ -100,7 +101,7 @@ def main():
         avg_loss = total_loss / len(train_loader)
         micro_f1, macro_f1 = evaluate_transformer(model, val_loader, device, cfg["threshold"])
         print(f"Epoch {epoch+1}: loss={avg_loss:.4f} | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
-        wandb.log({"epoch": epoch + 1, "train_loss": avg_loss, "val_micro_f1": micro_f1, "val_macro_f1": macro_f1})
+        wandb.log({"epoch": epoch + 1, "train_loss": avg_loss, "val_micro_f1": micro_f1, "val_macro_f1": macro_f1}, step=epoch + 1)
 
         if micro_f1 > best_micro_f1:
             best_micro_f1 = micro_f1
@@ -120,7 +121,7 @@ def main():
     micro_f1, macro_f1 = evaluate_transformer(model, test_loader, device, cfg["threshold"])
     save_results(cfg["output_dir"], micro_f1, macro_f1)
     print(f"Test | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
-    wandb.log({"test_micro_f1": micro_f1, "test_macro_f1": macro_f1})
+    wandb.log({"test_micro_f1": micro_f1, "test_macro_f1": macro_f1}, step=cfg["epochs"])
     wandb.finish()
     print("Training complete.")
 

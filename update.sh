@@ -10,6 +10,12 @@ set -e
 
 cd "$(dirname "$0")"
 
+echo "=== Killing running train/baseline jobs ==="
+pkill -f "python.*train\.py" 2>/dev/null || true
+pkill -f "python.*baseline\.py" 2>/dev/null || true
+pkill -f "python.*sample\.py" 2>/dev/null || true
+sleep 1
+
 echo "=== Fetching latest code ==="
 git fetch origin
 git reset --hard "origin/$(git rev-parse --abbrev-ref HEAD)"

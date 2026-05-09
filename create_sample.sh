@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build the two JSON subsets used by run_all.sh from the full BioASQ file:
-#   1) sample.json — reservoir sample from allMeSH (default 400k articles)
+#   1) sample.json — reservoir sample from allMeSH (default 100k articles)
 #   2) smoke.json — random subset from sample.json only (default 1k; no second full scan)
 #
 # Prerequisites: full corpus on disk (see download_bioasq_mesh.sh). Requires venv (see setup.sh).
@@ -17,7 +17,7 @@ source .venv/bin/activate
 DATA="${1:-data/allMeSH_2022.json}"
 SAMPLE="${SAMPLE:-data/sample.json}"
 SMOKE="${SMOKE:-data/smoke.json}"
-MAX_ARTICLES="${MAX_ARTICLES:-400000}"
+MAX_ARTICLES="${MAX_ARTICLES:-100000}"
 SMOKE_ARTICLES="${SMOKE_ARTICLES:-1000}"
 SEED="${SEED:-42}"
 export PYTHONUNBUFFERED=1
