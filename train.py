@@ -7,7 +7,7 @@ import torch.nn as nn
 import yaml
 import wandb
 from torch.utils.data import DataLoader, random_split
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, get_cosine_schedule_with_warmup
 from tqdm import tqdm
 
 from dataset import load_bioasq_data, build_label_vocab, encode_labels, BioASQDataset
@@ -75,6 +75,10 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=cfg["lr"])
     criterion = nn.BCEWithLogitsLoss()
 
+    total_steps = len(train_loader) * cfg["epochs"]
+    warmup_steps = int(total_steps * cfg.get("warmup_ratio", 0.0))
+    scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
+
     best_path = os.path.join(cfg["output_dir"], "best_model.pt")
     # First epoch must be able to beat this; otherwise tiny/smoke runs may never save a checkpoint
     # (e.g. val micro-F1 stays 0.0) and test eval would crash on a missing file.
@@ -96,12 +100,14 @@ def main():
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
+            scheduler.step()
             total_loss += loss.item()
 
         avg_loss = total_loss / len(train_loader)
         micro_f1, macro_f1 = evaluate_transformer(model, val_loader, device, cfg["threshold"])
         print(f"Epoch {epoch+1}: loss={avg_loss:.4f} | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
-        wandb.log({"epoch": epoch + 1, "train_loss": avg_loss, "val_micro_f1": micro_f1, "val_macro_f1": macro_f1}, step=epoch + 1)
+        current_lr = scheduler.get_last_lr()[0]
+        wandb.log({"epoch": epoch + 1, "train_loss": avg_loss, "val_micro_f1": micro_f1, "val_macro_f1": macro_f1, "lr": current_lr}, step=epoch + 1)
 
         if micro_f1 > best_micro_f1:
             best_micro_f1 = micro_f1

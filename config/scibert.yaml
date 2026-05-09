@@ -10,8 +10,9 @@ model_name: allenai/scibert_scivocab_uncased
 max_length: 128
 
 # Training
-epochs: 5
-early_stopping_patience: 2
+epochs: 30
+early_stopping_patience: 5
+warmup_ratio: 0.1
 batch_size: 32
 lr: 2.0e-5
 threshold: 0.5
