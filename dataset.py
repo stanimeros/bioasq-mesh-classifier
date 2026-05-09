@@ -76,6 +76,14 @@ def load_bioasq_data(path, max_articles=None, seed=42):
 
     if is_sampled:
         print(f"Loaded {len(texts)} pre-sampled articles from {path}")
+        if max_articles is not None and len(texts) > max_articles:
+            rng = random.Random(seed)
+            idx = list(range(len(texts)))
+            rng.shuffle(idx)
+            idx = idx[:max_articles]
+            texts = [texts[i] for i in idx]
+            labels = [labels[i] for i in idx]
+            print(f"Subsampled to {len(texts)} articles (max_articles={max_articles}, seed={seed})")
         return texts, labels
 
     rng = random.Random(seed)

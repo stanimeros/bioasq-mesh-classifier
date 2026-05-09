@@ -2,8 +2,12 @@
 Pre-sample a fixed number of articles from the full BioASQ dataset using
 reservoir sampling and save them as a compact JSON file.
 
+If --data is already a compact JSON from this script (articles use key \"text\"),
+loads it once and shuffles down to max_articles — no second pass over allMeSH.
+
 Usage:
     python sample.py --data data/allMeSH_2022.json --max_articles 10000 --out data/sample.json
+    python sample.py --data data/sample.json --max_articles 1000 --out data/smoke.json
 """
 
 import argparse
