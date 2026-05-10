@@ -49,11 +49,20 @@ echo "  Logs -> logs/smoke_biobert.log logs/smoke_scibert.log logs/smoke_pubmedb
 echo "  tail -f run_all.log logs/smoke_biobert.log logs/smoke_scibert.log logs/smoke_pubmedbert.log"
 
 # nohup python -u baseline.py --config config/baseline.yaml --data "$SMOKE" > logs/smoke_baseline.log 2>&1 &
-nohup python -u train.py --no_wandb --config config/biobert.yaml    --data "$SMOKE" > logs/smoke_biobert.log    2>&1 &
+# Smoke: tiny subsample + 1 short epoch (full runs below use config defaults only).
+smoke_train_opts=(
+  --epochs 1
+  --max_length 128
+  --batch_size 64
+  --early_stopping_patience 0
+  --max_articles 128
+  --min_label_count 1
+)
+nohup python -u train.py --no_wandb --config config/biobert.yaml    --data "$SMOKE" "${smoke_train_opts[@]}" > logs/smoke_biobert.log    2>&1 &
 PID1=$!
-nohup python -u train.py --no_wandb --config config/scibert.yaml    --data "$SMOKE" > logs/smoke_scibert.log    2>&1 &
+nohup python -u train.py --no_wandb --config config/scibert.yaml    --data "$SMOKE" "${smoke_train_opts[@]}" > logs/smoke_scibert.log    2>&1 &
 PID2=$!
-nohup python -u train.py --no_wandb --config config/pubmedbert.yaml --data "$SMOKE" > logs/smoke_pubmedbert.log 2>&1 &
+nohup python -u train.py --no_wandb --config config/pubmedbert.yaml --data "$SMOKE" "${smoke_train_opts[@]}" > logs/smoke_pubmedbert.log 2>&1 &
 PID3=$!
 
 echo "  PIDs: biobert=$PID1 scibert=$PID2 pubmedbert=$PID3"
