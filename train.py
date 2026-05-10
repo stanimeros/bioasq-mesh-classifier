@@ -19,7 +19,37 @@ def parse_args():
     parser.add_argument("--config", required=True, help="Path to YAML config file")
     parser.add_argument("--data", default=None, help="Override data path")
     parser.add_argument("--no_wandb", action="store_true", help="Disable Weights & Biases (e.g. smoke runs)")
+    parser.add_argument("--epochs", type=int, default=None, help="Override epochs (e.g. smoke runs)")
+    parser.add_argument("--max_length", type=int, default=None, help="Override max sequence length")
+    parser.add_argument("--batch_size", type=int, default=None, help="Override batch size")
+    parser.add_argument(
+        "--early_stopping_patience",
+        type=int,
+        default=None,
+        help="Override early stopping patience (0 disables)",
+    )
+    parser.add_argument(
+        "--max_articles",
+        type=int,
+        default=None,
+        help="Cap number of articles after load (pre-sampled JSON only; faster smoke)",
+    )
+    parser.add_argument("--min_label_count", type=int, default=None, help="Override min MeSH label count for vocab")
     return parser.parse_args()
+
+
+def apply_cfg_overrides(cfg, args):
+    """Apply CLI overrides onto loaded YAML (mutates cfg)."""
+    if args.epochs is not None:
+        cfg["epochs"] = args.epochs
+    if args.max_length is not None:
+        cfg["max_length"] = args.max_length
+    if args.batch_size is not None:
+        cfg["batch_size"] = args.batch_size
+    if args.early_stopping_patience is not None:
+        cfg["early_stopping_patience"] = args.early_stopping_patience
+    if args.min_label_count is not None:
+        cfg["min_label_count"] = args.min_label_count
 
 
 def main():
@@ -29,6 +59,7 @@ def main():
 
     if args.data:
         cfg["data"] = args.data
+    apply_cfg_overrides(cfg, args)
 
     os.makedirs(cfg["output_dir"], exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -42,7 +73,7 @@ def main():
     wandb.define_metric("*", step_metric="epoch")
 
     print("Loading data...")
-    texts, label_lists = load_bioasq_data(cfg["data"])
+    texts, label_lists = load_bioasq_data(cfg["data"], max_articles=args.max_articles)
     print(f"Loaded {len(texts)} articles")
 
     vocab = build_label_vocab(label_lists, min_count=cfg["min_label_count"])

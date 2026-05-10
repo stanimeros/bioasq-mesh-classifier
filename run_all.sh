@@ -1,6 +1,7 @@
 #!/bin/bash
 # Run training pipeline in two stages:
 #   [1/2] Smoke — BioBERT + SciBERT + PubMedBERT on smoke.json; wait until all finish.
+#         Fast path: 1 epoch, short seqs, capped articles (aim ~1 min on GPU; cold HF cache may add time).
 #         Transformer jobs use train.py --no_wandb (no W&B uploads).
 #   [2/2] Full — remove smoke outputs, then start the same three jobs on sample.json (nohup).
 #
