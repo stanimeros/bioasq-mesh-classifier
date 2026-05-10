@@ -100,7 +100,7 @@ def main():
             total_loss += loss.item()
 
         avg_loss = total_loss / len(train_loader)
-        micro_f1, macro_f1 = evaluate_transformer(model, val_loader, device, cfg["threshold"])
+        micro_f1, macro_f1 = evaluate_transformer(model, val_loader, device, cfg.get("threshold", 0.5))
         print(f"Epoch {epoch+1}: loss={avg_loss:.4f} | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
         current_lr = scheduler.get_last_lr()[0]
         wandb.log({"epoch": epoch + 1, "train_loss": avg_loss, "val_micro_f1": micro_f1, "val_macro_f1": macro_f1, "lr": current_lr}, step=epoch + 1)
