@@ -18,7 +18,6 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, help="Path to YAML config file")
     parser.add_argument("--data", default=None, help="Override data path")
-    parser.add_argument("--max_articles", type=int, default=None, help="Cap articles (smoke test)")
     parser.add_argument("--no_wandb", action="store_true", help="Disable Weights & Biases (e.g. smoke runs)")
     return parser.parse_args()
 
@@ -30,8 +29,6 @@ def main():
 
     if args.data:
         cfg["data"] = args.data
-    if args.max_articles:
-        cfg["max_articles"] = args.max_articles
 
     os.makedirs(cfg["output_dir"], exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -45,7 +42,7 @@ def main():
     wandb.define_metric("*", step_metric="epoch")
 
     print("Loading data...")
-    texts, label_lists = load_bioasq_data(cfg["data"], max_articles=cfg.get("max_articles"))
+    texts, label_lists = load_bioasq_data(cfg["data"])
     print(f"Loaded {len(texts)} articles")
 
     vocab = build_label_vocab(label_lists, min_count=cfg["min_label_count"])

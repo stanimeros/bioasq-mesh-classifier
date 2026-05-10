@@ -1,6 +1,5 @@
 data: data/allMeSH_2022.json
 output_dir: output/scibert
-max_articles: 100000
 min_label_count: 100
 val_split: 0.1
 test_split: 0.1
