@@ -3,7 +3,6 @@ import os
 import pickle
 
 import torch
-import torch.nn as nn
 import yaml
 import wandb
 from torch.utils.data import DataLoader, random_split
@@ -11,8 +10,8 @@ from transformers import AutoTokenizer, get_cosine_schedule_with_warmup
 from tqdm import tqdm
 
 from dataset import load_bioasq_data, build_label_vocab, encode_labels, BioASQDataset
-from evaluate import evaluate_transformer, save_results
-from model import BioASQClassifier
+from evaluate import evaluate_transformer, find_best_threshold, save_results
+from model import AsymmetricLoss, BioASQClassifier
 
 
 def parse_args():
@@ -73,7 +72,7 @@ def main():
 
     model = BioASQClassifier(cfg["model_name"], num_labels=len(vocab), dropout=cfg["dropout"]).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=cfg["lr"])
-    criterion = nn.BCEWithLogitsLoss()
+    criterion = AsymmetricLoss()
 
     total_steps = len(train_loader) * cfg["epochs"]
     warmup_steps = int(total_steps * cfg.get("warmup_ratio", 0.0))
@@ -124,10 +123,15 @@ def main():
         model.load_state_dict(torch.load(best_path, map_location=device))
     else:
         print("Warning: no best checkpoint saved; evaluating last-epoch weights.")
-    micro_f1, macro_f1 = evaluate_transformer(model, test_loader, device, cfg["threshold"])
-    save_results(cfg["output_dir"], micro_f1, macro_f1)
-    print(f"Test | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
-    wandb.log({"test_micro_f1": micro_f1, "test_macro_f1": macro_f1}, step=cfg["epochs"])
+
+    print("Tuning threshold on validation set...")
+    best_threshold, val_micro, val_macro = find_best_threshold(model, val_loader, device)
+    print(f"Best threshold: {best_threshold:.2f} (val micro-F1={val_micro:.4f})")
+
+    micro_f1, macro_f1 = evaluate_transformer(model, test_loader, device, best_threshold)
+    save_results(cfg["output_dir"], micro_f1, macro_f1, best_threshold)
+    print(f"Test | threshold={best_threshold:.2f} | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
+    wandb.log({"test_micro_f1": micro_f1, "test_macro_f1": macro_f1, "best_threshold": best_threshold}, step=cfg["epochs"])
     wandb.finish()
     print("Training complete.")
 

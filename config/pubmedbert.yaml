@@ -1,12 +1,12 @@
 data: data/allMeSH_2022.json
-output_dir: output/scibert
+output_dir: output/pubmedbert
 max_articles: 100000
 min_label_count: 100
 val_split: 0.1
 test_split: 0.1
 
 # Model
-model_name: allenai/scibert_scivocab_uncased
+model_name: microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext
 max_length: 512
 
 # Training

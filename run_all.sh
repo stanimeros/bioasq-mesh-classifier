@@ -1,8 +1,8 @@
 #!/bin/bash
 # Run training pipeline in two stages:
-#   [1/2] Smoke — BioBERT + SciBERT on smoke.json; wait until all finish.
+#   [1/2] Smoke — BioBERT + SciBERT + PubMedBERT on smoke.json; wait until all finish.
 #         Transformer jobs use train.py --no_wandb (no W&B uploads).
-#   [2/2] Full — remove smoke outputs, then start the same two jobs on sample.json (nohup).
+#   [2/2] Full — remove smoke outputs, then start the same three jobs on sample.json (nohup).
 #
 # Baseline (Word2Vec + MLP) already evaluated — commented out below.
 #
@@ -16,11 +16,11 @@
 # Detached: nohup ./run_all.sh >> run_all.log 2>&1 & disown
 #
 # Logs:
-#   Smoke: logs/smoke_biobert.log logs/smoke_scibert.log
-#   Full:  logs/biobert.log logs/scibert.log
+#   Smoke: logs/smoke_biobert.log logs/smoke_scibert.log logs/smoke_pubmedbert.log
+#   Full:  logs/biobert.log logs/scibert.log logs/pubmedbert.log
 #
 # Follow:
-#   tail -f run_all.log logs/smoke_biobert.log logs/smoke_scibert.log logs/biobert.log logs/scibert.log
+#   tail -f run_all.log logs/smoke_biobert.log logs/smoke_scibert.log logs/smoke_pubmedbert.log logs/biobert.log logs/scibert.log logs/pubmedbert.log
 
 set -e
 
@@ -42,36 +42,41 @@ for f in "$SMOKE" "$SAMPLE"; do
   fi
 done
 
-# ── [1/2] Smoke — wait for all three ─────────────────────────────────────────
+# ── [1/2] Smoke — wait for all ───────────────────────────────────────────────
 echo "=== [1/2] Smoke (--data $SMOKE) ==="
-echo "  Logs -> logs/smoke_biobert.log logs/smoke_scibert.log"
-echo "  tail -f run_all.log logs/smoke_biobert.log logs/smoke_scibert.log"
+echo "  Logs -> logs/smoke_biobert.log logs/smoke_scibert.log logs/smoke_pubmedbert.log"
+echo "  tail -f run_all.log logs/smoke_biobert.log logs/smoke_scibert.log logs/smoke_pubmedbert.log"
 
 # nohup python -u baseline.py --config config/baseline.yaml --data "$SMOKE" > logs/smoke_baseline.log 2>&1 &
-nohup python -u train.py --no_wandb --config config/biobert.yaml  --data "$SMOKE" > logs/smoke_biobert.log  2>&1 &
+nohup python -u train.py --no_wandb --config config/biobert.yaml    --data "$SMOKE" > logs/smoke_biobert.log    2>&1 &
 PID1=$!
-nohup python -u train.py --no_wandb --config config/scibert.yaml --data "$SMOKE" > logs/smoke_scibert.log 2>&1 &
+nohup python -u train.py --no_wandb --config config/scibert.yaml    --data "$SMOKE" > logs/smoke_scibert.log    2>&1 &
 PID2=$!
+nohup python -u train.py --no_wandb --config config/pubmedbert.yaml --data "$SMOKE" > logs/smoke_pubmedbert.log 2>&1 &
+PID3=$!
 
-echo "  PIDs: biobert=$PID1 scibert=$PID2"
+echo "  PIDs: biobert=$PID1 scibert=$PID2 pubmedbert=$PID3"
 echo "  Waiting for smoke jobs ..."
 wait "$PID1" || { echo "biobert smoke FAILED — see logs/smoke_biobert.log"; exit 1; }
 wait "$PID2" || { echo "scibert smoke FAILED — see logs/smoke_scibert.log"; exit 1; }
+wait "$PID3" || { echo "pubmedbert smoke FAILED — see logs/smoke_pubmedbert.log"; exit 1; }
 echo "--- Smoke passed ---"
 
 echo "=== Clearing output/ after smoke (fresh full run) ==="
-rm -rf output/biobert output/scibert
+rm -rf output/biobert output/scibert output/pubmedbert
 
 # ── [2/2] Full sample — fire and forget ─────────────────────────────────────
 echo "=== [2/2] Full run (--data $SAMPLE) ==="
-echo "  Logs -> logs/biobert.log logs/scibert.log"
-echo "  tail -f run_all.log logs/biobert.log logs/scibert.log"
+echo "  Logs -> logs/biobert.log logs/scibert.log logs/pubmedbert.log"
+echo "  tail -f run_all.log logs/biobert.log logs/scibert.log logs/pubmedbert.log"
 
 # nohup python -u baseline.py --config config/baseline.yaml --data "$SAMPLE" > logs/baseline.log 2>&1 &
 # echo "  baseline PID $! -> logs/baseline.log"
-nohup python -u train.py    --config config/biobert.yaml  --data "$SAMPLE" > logs/biobert.log  2>&1 &
-echo "  biobert  PID $! -> logs/biobert.log"
-nohup python -u train.py    --config config/scibert.yaml --data "$SAMPLE" > logs/scibert.log  2>&1 &
-echo "  scibert  PID $! -> logs/scibert.log"
+nohup python -u train.py --config config/biobert.yaml    --data "$SAMPLE" > logs/biobert.log    2>&1 &
+echo "  biobert    PID $! -> logs/biobert.log"
+nohup python -u train.py --config config/scibert.yaml    --data "$SAMPLE" > logs/scibert.log    2>&1 &
+echo "  scibert    PID $! -> logs/scibert.log"
+nohup python -u train.py --config config/pubmedbert.yaml --data "$SAMPLE" > logs/pubmedbert.log 2>&1 &
+echo "  pubmedbert PID $! -> logs/pubmedbert.log"
 
 echo "=== Full-run jobs started ==="

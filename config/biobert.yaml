@@ -7,13 +7,12 @@ test_split: 0.1
 
 # Model
 model_name: dmis-lab/biobert-base-cased-v1.2
-max_length: 128
+max_length: 512
 
 # Training
 epochs: 30
 early_stopping_patience: 5
 warmup_ratio: 0.1
-batch_size: 32
+batch_size: 16
 lr: 2.0e-5
-threshold: 0.5
 dropout: 0.1
