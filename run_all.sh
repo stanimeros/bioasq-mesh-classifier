@@ -1,32 +1,40 @@
 #!/bin/bash
 # Run training pipeline in two stages:
-#   [1/2] Smoke — BioBERT + SciBERT + PubMedBERT on smoke.json; wait until all finish.
-#         Fast path: 1 epoch, short seqs, capped articles (aim ~1 min on GPU; cold HF cache may add time).
-#         Transformer jobs use train.py --no_wandb (no W&B uploads).
-#   [2/2] Full — remove smoke outputs, then start the same three jobs on sample.json (nohup).
-#
-# Baseline (Word2Vec + MLP) already evaluated — commented out below.
-#
-# Prerequisites: create_sample.sh has produced data/smoke.json and data/sample.json.
+#   [1/2] Smoke — quick sanity check on smoke.json (1 epoch, short seqs, capped articles).
+#   [2/2] Full  — full training on sample.json (nohup, detached).
 #
 # Usage:
-#   bash run_all.sh
-#   bash run_all.sh path/to/smoke.json path/to/sample.json
+#   bash run_all.sh [biobert|scibert|pubmedbert]   # single model (default: all)
+#   bash run_all.sh biobert path/to/smoke.json path/to/sample.json
 # Env: SMOKE, SAMPLE (defaults data/smoke.json, data/sample.json)
+#   MODEL — alternative to positional arg (MODEL=scibert bash run_all.sh)
 #
-# Detached: nohup ./run_all.sh >> run_all.log 2>&1 & disown
+# Detached: nohup ./run_all.sh biobert >> run_all.log 2>&1 & disown
 #
 # Logs:
-#   Smoke: logs/smoke_biobert.log logs/smoke_scibert.log logs/smoke_pubmedbert.log
-#   Full:  logs/biobert.log logs/scibert.log logs/pubmedbert.log
+#   Smoke: logs/smoke_<model>.log
+#   Full:  logs/<model>.log
 #
 # Follow:
-#   tail -f run_all.log logs/smoke_biobert.log logs/smoke_scibert.log logs/smoke_pubmedbert.log logs/biobert.log logs/scibert.log logs/pubmedbert.log
+#   tail -f run_all.log logs/smoke_biobert.log logs/biobert.log
 
 set -e
 
 cd "$(dirname "$0")"
 source .venv/bin/activate
+
+# ── Argument parsing ─────────────────────────────────────────────────────────
+# First positional arg (if it looks like a model name) selects the model;
+# remaining positionals override smoke/sample paths.
+ALL_MODELS=(biobert scibert pubmedbert)
+
+arg1="${1:-}"
+if [[ "$arg1" == "biobert" || "$arg1" == "scibert" || "$arg1" == "pubmedbert" ]]; then
+  MODEL="$arg1"
+  shift
+else
+  : "${MODEL:=all}"
+fi
 
 : "${SMOKE:=data/smoke.json}"
 : "${SAMPLE:=data/sample.json}"
@@ -34,6 +42,13 @@ source .venv/bin/activate
 [[ -n "${2:-}" ]] && SAMPLE="$2"
 export PYTHONUNBUFFERED=1
 
+if [[ "$MODEL" == "all" ]]; then
+  MODELS=("${ALL_MODELS[@]}")
+else
+  MODELS=("$MODEL")
+fi
+
+echo "=== Models: ${MODELS[*]} ==="
 mkdir -p logs
 
 for f in "$SMOKE" "$SAMPLE"; do
@@ -43,13 +58,9 @@ for f in "$SMOKE" "$SAMPLE"; do
   fi
 done
 
-# ── [1/2] Smoke — wait for all ───────────────────────────────────────────────
+# ── [1/2] Smoke — run selected models sequentially ───────────────────────────
 echo "=== [1/2] Smoke (--data $SMOKE) ==="
-echo "  Logs -> logs/smoke_biobert.log logs/smoke_scibert.log logs/smoke_pubmedbert.log"
-echo "  tail -f run_all.log logs/smoke_biobert.log logs/smoke_scibert.log logs/smoke_pubmedbert.log"
 
-# nohup python -u baseline.py --config config/baseline.yaml --data "$SMOKE" > logs/smoke_baseline.log 2>&1 &
-# Smoke: tiny subsample + 1 short epoch (full runs below use config defaults only).
 smoke_train_opts=(
   --epochs 1
   --max_length 128
@@ -58,35 +69,30 @@ smoke_train_opts=(
   --max_articles 128
   --min_label_count 1
 )
-nohup python -u train.py --no_wandb --config config/biobert.yaml    --data "$SMOKE" "${smoke_train_opts[@]}" > logs/smoke_biobert.log    2>&1 &
-PID1=$!
-nohup python -u train.py --no_wandb --config config/scibert.yaml    --data "$SMOKE" "${smoke_train_opts[@]}" > logs/smoke_scibert.log    2>&1 &
-PID2=$!
-nohup python -u train.py --no_wandb --config config/pubmedbert.yaml --data "$SMOKE" "${smoke_train_opts[@]}" > logs/smoke_pubmedbert.log 2>&1 &
-PID3=$!
 
-echo "  PIDs: biobert=$PID1 scibert=$PID2 pubmedbert=$PID3"
-echo "  Waiting for smoke jobs ..."
-wait "$PID1" || { echo "biobert smoke FAILED — see logs/smoke_biobert.log"; exit 1; }
-wait "$PID2" || { echo "scibert smoke FAILED — see logs/smoke_scibert.log"; exit 1; }
-wait "$PID3" || { echo "pubmedbert smoke FAILED — see logs/smoke_pubmedbert.log"; exit 1; }
+for m in "${MODELS[@]}"; do
+  echo "  Smoke: $m -> logs/smoke_${m}.log"
+  python -u train.py --no_wandb --config "config/${m}.yaml" --data "$SMOKE" "${smoke_train_opts[@]}" \
+    > "logs/smoke_${m}.log" 2>&1 \
+    || { echo "$m smoke FAILED — see logs/smoke_${m}.log"; exit 1; }
+  echo "  $m smoke OK"
+done
+
 echo "--- Smoke passed ---"
 
-echo "=== Clearing output/ after smoke (fresh full run) ==="
-rm -rf output/biobert output/scibert output/pubmedbert
+# ── [2/2] Full run — run selected models sequentially ────────────────────────
+echo "=== Clearing output/ for selected models ==="
+for m in "${MODELS[@]}"; do
+  rm -rf "output/${m}"
+done
 
-# ── [2/2] Full sample — fire and forget ─────────────────────────────────────
 echo "=== [2/2] Full run (--data $SAMPLE) ==="
-echo "  Logs -> logs/biobert.log logs/scibert.log logs/pubmedbert.log"
-echo "  tail -f run_all.log logs/biobert.log logs/scibert.log logs/pubmedbert.log"
 
-# nohup python -u baseline.py --config config/baseline.yaml --data "$SAMPLE" > logs/baseline.log 2>&1 &
-# echo "  baseline PID $! -> logs/baseline.log"
-nohup python -u train.py --config config/biobert.yaml    --data "$SAMPLE" > logs/biobert.log    2>&1 &
-echo "  biobert    PID $! -> logs/biobert.log"
-nohup python -u train.py --config config/scibert.yaml    --data "$SAMPLE" > logs/scibert.log    2>&1 &
-echo "  scibert    PID $! -> logs/scibert.log"
-nohup python -u train.py --config config/pubmedbert.yaml --data "$SAMPLE" > logs/pubmedbert.log 2>&1 &
-echo "  pubmedbert PID $! -> logs/pubmedbert.log"
+for m in "${MODELS[@]}"; do
+  echo "  Full: $m -> logs/${m}.log"
+  nohup python -u train.py --config "config/${m}.yaml" --data "$SAMPLE" \
+    > "logs/${m}.log" 2>&1 &
+  echo "  $m PID $! -> logs/${m}.log"
+done
 
 echo "=== Full-run jobs started ==="
