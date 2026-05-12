@@ -64,6 +64,18 @@ def main():
     os.makedirs(cfg["output_dir"], exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
+    if device.type == "cuda":
+        props = torch.cuda.get_device_properties(0)
+        cap = torch.cuda.get_device_capability(0)
+        print(
+            f"GPU: {props.name} | CUDA capability sm_{cap[0]}{cap[1]} | "
+            f"VRAM ~{props.total_memory / (1024**3):.1f} GiB | torch {torch.__version__}"
+        )
+    else:
+        print(
+            "Warning: training on CPU (no CUDA). "
+            "On a Linux GPU box, reinstall torch with CUDA (see setup.sh) or set CUDA_VISIBLE_DEVICES."
+        )
 
     run_name = os.path.basename(cfg["output_dir"])
     wandb_kwargs = {"project": "bioasq-mesh-classifier", "name": run_name, "config": cfg}
@@ -94,9 +106,12 @@ def main():
     train_set, val_set, test_set = random_split(dataset, [train_size, val_size, test_size])
     print(f"Train: {train_size}, Val: {val_size}, Test: {test_size}")
 
-    train_loader = DataLoader(train_set, batch_size=cfg["batch_size"], shuffle=True, num_workers=4, pin_memory=True)
-    val_loader = DataLoader(val_set, batch_size=cfg["batch_size"], num_workers=4, pin_memory=True)
-    test_loader = DataLoader(test_set, batch_size=cfg["batch_size"], num_workers=4, pin_memory=True)
+    num_workers = int(os.environ.get("NUM_WORKERS", "4"))
+    pin_memory = device.type == "cuda"
+    dl_kw = {"num_workers": num_workers, "pin_memory": pin_memory}
+    train_loader = DataLoader(train_set, batch_size=cfg["batch_size"], shuffle=True, **dl_kw)
+    val_loader = DataLoader(val_set, batch_size=cfg["batch_size"], **dl_kw)
+    test_loader = DataLoader(test_set, batch_size=cfg["batch_size"], **dl_kw)
 
     model = BioASQClassifier(cfg["model_name"], num_labels=len(vocab), dropout=cfg["dropout"]).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=cfg["lr"])

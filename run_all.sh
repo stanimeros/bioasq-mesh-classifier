@@ -8,6 +8,7 @@
 #   bash run_all.sh biobert path/to/smoke.json path/to/sample.json
 # Env: SMOKE, SAMPLE (defaults data/smoke.json, data/sample.json)
 #   MODEL — alternative to positional arg (MODEL=scibert bash run_all.sh)
+#   NUM_WORKERS — DataLoader workers (default 4); use 0 if workers hang on NFS.
 #
 # Detached: nohup ./run_all.sh biobert >> run_all.log 2>&1 & disown
 #
