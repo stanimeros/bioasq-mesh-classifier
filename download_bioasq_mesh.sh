@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Download full BioASQ Task 10a allMeSH JSON via participant login (CSRF + Referer).
 #
-# Usage:
+# Usage (interactive — prompts for username/password on a TTY):
+#   bash download_bioasq_mesh.sh
+#
+# Usage (non-interactive — required when stdin is not a terminal, e.g. nohup):
 #   export BIOASQ_USERNAME='your_user'
 #   export BIOASQ_PASSWORD='your_password'
 #   bash download_bioasq_mesh.sh
 #
-# Run detached (SSH-safe); log to file:
+# Run detached (SSH-safe); log to file (must pass credentials via env — no TTY):
 #   nohup env BIOASQ_USERNAME='…' BIOASQ_PASSWORD='…' ./download_bioasq_mesh.sh >> download_bioasq.log 2>&1 &
 #   disown   # optional: drop job from shell so it is not SIGHUP’d on some setups
 # Use BIOASQ_QUIET=1 for less noisy logs when not on a TTY.
@@ -28,7 +31,18 @@ COOKIE_JAR="${BIOASQ_COOKIE:-data/.bioasq_cookies.txt}"
 UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
 if [[ -z "${BIOASQ_USERNAME:-}" || -z "${BIOASQ_PASSWORD:-}" ]]; then
-  echo "Set BIOASQ_USERNAME and BIOASQ_PASSWORD (non-interactive login)." >&2
+  if [[ -t 0 && -t 1 ]]; then
+    read -r -p "BioASQ username: " BIOASQ_USERNAME
+    read -r -s -p "BioASQ password: " BIOASQ_PASSWORD
+    echo
+  else
+    echo "Set BIOASQ_USERNAME and BIOASQ_PASSWORD (no TTY for interactive login)." >&2
+    exit 1
+  fi
+fi
+
+if [[ -z "${BIOASQ_USERNAME:-}" || -z "${BIOASQ_PASSWORD:-}" ]]; then
+  echo "BioASQ username and password cannot be empty." >&2
   exit 1
 fi
 

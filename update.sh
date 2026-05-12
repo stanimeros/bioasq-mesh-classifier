@@ -1,8 +1,10 @@
 #!/bin/bash
-# Pull latest git state and drop untracked clutter — without removing datasets or archives.
+# Pull latest git state and drop untracked clutter — without removing datasets, samples,
+# training outputs, or logs.
 #
-# Keeps (not removed by git clean): entire data/ tree; any *.json, *.zip, *.gz (any path).
-# Everything else untracked (e.g. logs/, output/, wandb/) can be removed — commit files you need.
+# Keeps (not removed by git clean): data/ (downloads + sample.json/smoke.json etc.);
+# output/ (checkpoints, results); logs/; wandb/; any *.json, *.zip, *.gz (any path).
+# Other untracked files may still be removed — commit what you need to keep.
 #
 # Usage: bash update.sh
 
@@ -20,9 +22,12 @@ echo "=== Fetching latest code ==="
 git fetch origin
 git reset --hard "origin/$(git rev-parse --abbrev-ref HEAD)"
 
-echo "=== git clean (excluding data/ and common dataset extensions) ==="
+echo "=== git clean (excluding data/, output/, logs/, wandb/, archives) ==="
 git clean -fd \
   -e 'data/' \
+  -e 'output/' \
+  -e 'logs/' \
+  -e 'wandb/' \
   -e '*.json' \
   -e '*.zip' \
   -e '*.gz'
