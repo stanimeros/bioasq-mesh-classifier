@@ -4,6 +4,10 @@
 # Usage: bash setup.sh
 # Then: source .venv/bin/activate
 #
+# Detached (large downloads; survives SSH disconnect):
+#   mkdir -p logs && nohup bash setup.sh >> logs/setup.log 2>&1 & disown
+#   tail -f logs/setup.log
+#
 # On Linux with an NVIDIA driver, PyTorch is installed from the CUDA 12.1 wheel
 # index first so you get a GPU build that still supports older cards (e.g. Pascal
 # TITAN Xp). Plain `pip install torch` can pick a wheel that does not match your
