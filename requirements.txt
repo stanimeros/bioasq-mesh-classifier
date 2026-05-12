@@ -1,5 +1,7 @@
 torch>=2.0.0,<3
-transformers>=4.35.0
+# Newer transformers require torch>=2.6 to load .bin checkpoints (CVE-2025-32434). CUDA 12.1
+# wheels only ship torch<=2.5.1, so cap HF until you use driver 550+ and setup.sh picks cu124.
+transformers>=4.35.0,<4.48.0
 scikit-learn>=1.3.0
 numpy>=1.24.0
 pandas>=2.0.0
