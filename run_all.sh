@@ -1,6 +1,6 @@
 #!/bin/bash
-# Run training pipeline:
-#   Full — training on sample.json (nohup, detached).
+# Run training pipeline (foreground, no nohup — output also in logs/<model>.log):
+#   Full — sequential training on sample.json.
 #   (Smoke stage is commented out; re-enable when you want a quick sanity check on smoke.json.)
 #
 # Usage:
@@ -10,9 +10,8 @@
 #   MODEL — alternative to positional arg (MODEL=scibert bash run_all.sh)
 #   NUM_WORKERS — DataLoader workers (default 4); use 0 if workers hang on NFS.
 #
-# Detached (recommended): nohup bash run_all.sh >> run_all.log 2>&1 &
-# Full runs are sequential so one model uses the GPU at a time (parallel nohup trains OOM a single GPU).
-# To run one model only: bash run_all.sh biobert
+# Optional detach over SSH: nohup bash run_all.sh >> run_all.log 2>&1 &
+# Full runs are sequential (one GPU at a time). One model: bash run_all.sh biobert
 #
 # Logs:
 #   Smoke: logs/smoke_<model>.log
@@ -89,9 +88,8 @@ done
 echo "=== Full run (--data $SAMPLE), one model at a time ==="
 
 for m in "${MODELS[@]}"; do
-  echo "  Full: $m -> logs/${m}.log"
-  python -u train.py --config "config/${m}.yaml" --data "$SAMPLE" \
-    > "logs/${m}.log" 2>&1
+  echo "  Full: $m (terminal + logs/${m}.log)"
+  python -u train.py --config "config/${m}.yaml" --data "$SAMPLE" 2>&1 | tee "logs/${m}.log"
   echo "  $m finished -> logs/${m}.log"
 done
 
