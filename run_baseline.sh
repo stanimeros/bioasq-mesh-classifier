@@ -1,16 +1,15 @@
 #!/bin/bash
-# Start BioBERT training under nohup (exit immediately; training keeps running).
+# Start baseline (Word2Vec + MLP) training under nohup (exit immediately; training keeps running).
 #
 # Usage:
-#   bash run_biobert.sh
-#   SAMPLE=/path/to/sample.json bash run_biobert.sh
+#   bash run_baseline.sh
+#   SAMPLE=/path/to/sample.json bash run_baseline.sh
 #
-# Env: SAMPLE (default data/sample.json),
-#      NUM_WORKERS (DataLoader; default 4, use 0 on NFS hangs).
-# Logs: logs/biobert.log — tail -f logs/biobert.log
+# Env: SAMPLE (default data/sample.json).
+# Logs: logs/baseline.log — tail -f logs/baseline.log
 
 set -e
-MODEL=biobert
+MODEL=baseline
 
 cd "$(dirname "$0")"
 source .venv/bin/activate
@@ -25,7 +24,7 @@ fi
 mkdir -p logs
 rm -rf "output/${MODEL}"
 
-nohup python -u train.py --config "config/${MODEL}.yaml" --data "$SAMPLE" \
+nohup python -u baseline.py --config "config/${MODEL}.yaml" --data "$SAMPLE" \
   >"logs/${MODEL}.log" 2>&1 &
 echo $! >"logs/${MODEL}.pid"
 echo "Started ${MODEL} PID $(cat "logs/${MODEL}.pid")"
