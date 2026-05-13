@@ -10,7 +10,9 @@
 #   MODEL — alternative to positional arg (MODEL=scibert bash run_all.sh)
 #   NUM_WORKERS — DataLoader workers (default 4); use 0 if workers hang on NFS.
 #
-# Detached: nohup ./run_all.sh biobert >> run_all.log 2>&1 & disown
+# Detached (recommended): nohup bash run_all.sh >> run_all.log 2>&1 &
+# Full runs are sequential so one model uses the GPU at a time (parallel nohup trains OOM a single GPU).
+# To run one model only: bash run_all.sh biobert
 #
 # Logs:
 #   Smoke: logs/smoke_<model>.log
@@ -84,13 +86,13 @@ for m in "${MODELS[@]}"; do
   rm -rf "output/${m}"
 done
 
-echo "=== Full run (--data $SAMPLE) ==="
+echo "=== Full run (--data $SAMPLE), one model at a time ==="
 
 for m in "${MODELS[@]}"; do
   echo "  Full: $m -> logs/${m}.log"
-  nohup python -u train.py --config "config/${m}.yaml" --data "$SAMPLE" \
-    > "logs/${m}.log" 2>&1 &
-  echo "  $m PID $! -> logs/${m}.log"
+  python -u train.py --config "config/${m}.yaml" --data "$SAMPLE" \
+    > "logs/${m}.log" 2>&1
+  echo "  $m finished -> logs/${m}.log"
 done
 
-echo "=== Full-run jobs started ==="
+echo "=== All full runs finished ==="
