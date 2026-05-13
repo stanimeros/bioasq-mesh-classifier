@@ -1,4 +1,4 @@
-data: data/allMeSH_2022.json
+data: data/sample.json
 output_dir: output/biobert
 min_label_count: 100
 val_split: 0.1
