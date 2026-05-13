@@ -1,6 +1,6 @@
 data: data/sample.json
 output_dir: output/pubmedbert
-min_label_count: 100
+min_label_count: 10
 val_split: 0.1
 test_split: 0.1
 
