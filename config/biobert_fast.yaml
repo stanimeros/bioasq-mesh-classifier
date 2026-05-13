@@ -1,0 +1,17 @@
+# Faster epochs: shorter context + larger batches + AMP in train.py (CUDA).
+# Typical RTX 3090: ~15–22 min/epoch vs ~28 min with default 512×16 fp32 (still 80k train articles).
+data: data/allMeSH_2022.json
+output_dir: output/biobert_fast
+min_label_count: 100
+val_split: 0.1
+test_split: 0.1
+
+model_name: dmis-lab/biobert-base-cased-v1.2
+max_length: 256
+batch_size: 32
+
+epochs: 30
+early_stopping_patience: 5
+warmup_ratio: 0.1
+lr: 2.0e-5
+dropout: 0.1

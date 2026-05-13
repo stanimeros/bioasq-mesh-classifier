@@ -1,6 +1,7 @@
 import argparse
 import os
 import pickle
+from contextlib import nullcontext
 
 import torch
 import yaml
@@ -35,6 +36,11 @@ def parse_args():
         help="Cap number of articles after load (pre-sampled JSON only; faster smoke)",
     )
     parser.add_argument("--min_label_count", type=int, default=None, help="Override min MeSH label count for vocab")
+    parser.add_argument(
+        "--no_amp",
+        action="store_true",
+        help="Disable CUDA automatic mixed precision (fp16/bf16); slower but maximally stable",
+    )
     return parser.parse_args()
 
 
@@ -71,6 +77,7 @@ def main():
             f"GPU: {props.name} | CUDA capability sm_{cap[0]}{cap[1]} | "
             f"VRAM ~{props.total_memory / (1024**3):.1f} GiB | torch {torch.__version__}"
         )
+        torch.backends.cudnn.benchmark = True
     else:
         print(
             "Warning: training on CPU (no CUDA). "
@@ -81,6 +88,20 @@ def main():
     wandb_kwargs = {"project": "bioasq-mesh-classifier", "name": run_name, "config": cfg}
     if args.no_wandb:
         wandb_kwargs["mode"] = "disabled"
+    use_amp = device.type == "cuda" and not args.no_amp
+    amp_dtype = None
+    scaler = None
+    if use_amp and torch.cuda.is_bf16_supported():
+        amp_dtype = torch.bfloat16
+        scaler = torch.amp.GradScaler("cuda", enabled=False)
+        print("AMP: bfloat16 (no loss scaling)")
+    elif use_amp:
+        amp_dtype = torch.float16
+        scaler = torch.amp.GradScaler("cuda", enabled=True)
+        print("AMP: float16 + GradScaler")
+    else:
+        print("AMP: disabled")
+
     wandb.init(**wandb_kwargs)
     wandb.define_metric("*", step_metric="epoch")
 
@@ -128,6 +149,12 @@ def main():
     patience = cfg.get("early_stopping_patience", 0)
     epochs_without_improvement = 0
 
+    autocast_ctx = (
+        torch.amp.autocast("cuda", dtype=amp_dtype, enabled=True)
+        if use_amp and amp_dtype is not None
+        else nullcontext()
+    )
+
     for epoch in range(cfg["epochs"]):
         model.train()
         total_loss = 0.0
@@ -137,11 +164,20 @@ def main():
             labels = batch["labels"].to(device)
 
             optimizer.zero_grad()
-            logits = model(input_ids, attention_mask)
-            loss = criterion(logits, labels)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
+            with autocast_ctx:
+                logits = model(input_ids, attention_mask)
+                loss = criterion(logits, labels)
+
+            if scaler is not None and scaler.is_enabled():
+                scaler.scale(loss).backward()
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                optimizer.step()
             scheduler.step()
             total_loss += loss.item()
 

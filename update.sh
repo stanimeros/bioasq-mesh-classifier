@@ -33,7 +33,9 @@ git clean -fd \
   -e '*.gz'
 
 chmod +x \
-  run_all.sh \
+  run_biobert.sh \
+  run_scibert.sh \
+  run_pubmedbert.sh \
   update.sh \
   setup.sh \
   create_sample.sh \
