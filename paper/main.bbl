@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{11}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -65,6 +65,19 @@
 \newblock
 
 
+\bibitem[Gu et~al\mbox{.}(2021)]%
+        {pubmedbert}
+\bibfield{author}{\bibinfo{person}{Yu Gu}, \bibinfo{person}{Robert Tinn},
+  \bibinfo{person}{Hao Cheng}, \bibinfo{person}{Michael Lucas},
+  \bibinfo{person}{Naoto Usuyama}, \bibinfo{person}{Xiaodong Liu},
+  \bibinfo{person}{Tristan Naumann}, \bibinfo{person}{Jianfeng Gao}, {and}
+  \bibinfo{person}{Hoifung Poon}.} \bibinfo{year}{2021}\natexlab{}.
+\newblock \showarticletitle{Domain-specific language model pretraining for
+  biomedical natural language processing}. In \bibinfo{booktitle}{\emph{ACM
+  Transactions on Computing for Healthcare}}.
+\newblock
+
+
 \bibitem[Joulin et~al\mbox{.}(2016)]%
         {joulin2017}
 \bibfield{author}{\bibinfo{person}{Armand Joulin}, \bibinfo{person}{Edouard
@@ -118,6 +131,18 @@
   \bibinfo{year}{2019}\natexlab{}.
 \newblock \showarticletitle{{AttentionMeSH}: Simple, Scalable and Accurate MeSH
   Indexer}. In \bibinfo{booktitle}{\emph{BioASQ Workshop}}.
+\newblock
+
+
+\bibitem[Ridnik et~al\mbox{.}(2021)]%
+        {ridnik2021asl}
+\bibfield{author}{\bibinfo{person}{Tal Ridnik}, \bibinfo{person}{Emanuel
+  Ben-Baruch}, \bibinfo{person}{Nadav Zamir}, \bibinfo{person}{Asaf Noy},
+  \bibinfo{person}{Itamar Friedman}, \bibinfo{person}{Matan Protter}, {and}
+  \bibinfo{person}{Lihi Zelnik-Manor}.} \bibinfo{year}{2021}\natexlab{}.
+\newblock \showarticletitle{Asymmetric loss for multi-label classification}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the IEEE/CVF International
+  Conference on Computer Vision}}.
 \newblock
 
 
