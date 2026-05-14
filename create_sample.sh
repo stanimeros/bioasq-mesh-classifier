@@ -20,7 +20,7 @@ source .venv/bin/activate
 DATA="${1:-data/allMeSH_2022.json}"
 SAMPLE="${SAMPLE:-data/sample.json}"
 SMOKE="${SMOKE:-data/smoke.json}"
-MAX_ARTICLES="${MAX_ARTICLES:-50000}"
+MAX_ARTICLES="${MAX_ARTICLES:-100000}"
 SMOKE_ARTICLES="${SMOKE_ARTICLES:-1000}"
 SEED="${SEED:-42}"
 MIN_PER_LABEL="${MIN_PER_LABEL:-5}"
