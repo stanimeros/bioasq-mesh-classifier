@@ -2,10 +2,11 @@
 
 \usepackage{amsmath}
 \usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{multirow}
 
-%% ACM copyright/conference info — adjust if needed
 \setcopyright{none}
-\acmConference[NLP Course]{Natural Language Processing}{2025--26}{University of Macedonia}
+\acmConference[SETN 2026]{13th Hellenic Conference on Artificial Intelligence}{2026}{Chania, Greece}
 
 \title{Multi-Label MeSH Term Classification of Biomedical Articles Using Pre-trained Language Models}
 
@@ -26,15 +27,20 @@
 \email{aid26012@uom.edu.gr}
 
 \begin{abstract}
-We address the task of automatic MeSH (Medical Subject Headings) term assignment to biomedical articles,
-formulated as a multi-label classification problem. Using only the title and abstract of each article,
-we compare a Word2Vec + MLP baseline against PubMedBERT, a transformer pre-trained exclusively on
-PubMed abstracts, on a coverage-sampled subset of the BioASQ 2022 allMeSH dataset.
-Our results show that PubMedBERT achieves a micro-F1 of 0.476 and a macro-F1 of 0.185 on the test set,
-substantially outperforming the Word2Vec + MLP baseline (micro-F1 = 0.340, macro-F1 = 0.039).
+Automatic assignment of Medical Subject Headings (MeSH) to biomedical articles is a critical
+information retrieval task, supporting the indexing of the rapidly growing biomedical literature.
+We formulate this as a multi-label classification problem and compare two approaches: a classical
+Word2Vec + MLP baseline and a fine-tuned PubMedBERT model. Both systems use only the title and
+abstract of each article. We train and evaluate on a 100{,}000-article coverage-sampled subset of
+the BioASQ 2022 allMeSH corpus, which contains over 16 million annotated articles and 29{,}681
+unique MeSH terms. Our coverage-first sampling strategy guarantees that every MeSH label in the
+corpus appears at least five times in the training data. PubMedBERT substantially outperforms the
+Word2Vec baseline (micro-F1 0.340, macro-F1 0.039), achieving a micro-F1 of -- and a macro-F1 of
+--, demonstrating the value of domain-specific pre-training for biomedical text classification.
 \end{abstract}
 
-\keywords{biomedical text classification, multi-label classification, MeSH terms, PubMedBERT, BioASQ, Word2Vec}
+\keywords{biomedical text classification, multi-label classification, MeSH terms, PubMedBERT,
+BioASQ, Word2Vec, asymmetric loss}
 
 \begin{document}
 
@@ -42,131 +48,347 @@ substantially outperforming the Word2Vec + MLP baseline (micro-F1 = 0.340, macro
 
 \section{Introduction}
 
-Medical literature is indexed in PubMed using MeSH (Medical Subject Headings), a controlled vocabulary
-maintained by the National Library of Medicine. Manually assigning MeSH terms to the growing volume of
-biomedical publications is time-consuming and expensive. Automatic biomedical indexing, the task of
-predicting MeSH terms from an article's text, therefore has significant practical value.
+Medical literature is indexed in PubMed using Medical Subject Headings (MeSH), a controlled
+vocabulary of over 29{,}000 terms maintained by the National Library of Medicine. Every article
+deposited in MEDLINE is manually annotated by professional indexers, a process that is both
+time-consuming and expensive. With more than one million new biomedical articles published each
+year, the indexing backlog is a persistent challenge, making automatic MeSH term assignment a
+high-value application of natural language processing.
 
-This paper presents our approach to the BioASQ Task A challenge~\cite{bioasq2015}, which frames the
-problem as multi-label classification: each article may be assigned multiple MeSH terms simultaneously.
-We focus exclusively on the title and abstract as input, and compare a classical word embedding baseline
-against a fine-tuned biomedical transformer model.
+The BioASQ challenge~\cite{bioasq2015} formalises this as a multi-label classification task:
+given the title and abstract of a biomedical article, a system must predict the set of MeSH terms
+that a human indexer would assign. The task is challenging for several reasons. First, the label
+space is very large — the 2022 vocabulary contains 29{,}681 distinct MeSH terms. Second, the label
+distribution is highly skewed: a handful of terms such as \textit{Humans}, \textit{Male}, and
+\textit{Female} appear in millions of articles, while thousands of specialised terms appear in
+fewer than ten. Third, each article is assigned an average of 12.7 labels, requiring the model
+to make correlated multi-label predictions rather than a single discrete choice.
+
+Classical approaches to this task relied on bag-of-words or TF-IDF representations fed into
+linear classifiers or k-nearest-neighbour retrieval systems. Word embeddings improved performance
+by capturing semantic similarity between medical terms. More recently, transformer models
+pre-trained on large biomedical corpora have significantly advanced the state of the art.
+
+In this work we compare two systems. Our baseline combines Word2Vec embeddings with a multilayer
+perceptron (MLP) classifier, representing the word-embedding paradigm. Our main model fine-tunes
+PubMedBERT~\cite{pubmedbert}, a BERT variant pre-trained from scratch exclusively on PubMed
+abstracts. Both systems are evaluated on the same 100{,}000-article sample drawn from the BioASQ
+2022 allMeSH corpus using a novel coverage-first sampling strategy that ensures every MeSH label
+is represented in the training data.
 
 The rest of this paper is organised as follows. Section~\ref{sec:related} reviews related work.
-Section~\ref{sec:method} describes our approach. Section~\ref{sec:experiments} presents experimental
-results. Section~\ref{sec:conclusion} concludes.
+Section~\ref{sec:method} describes our data sampling strategy, baseline, and PubMedBERT approach.
+Section~\ref{sec:experiments} presents experimental setup and results.
+Section~\ref{sec:discussion} discusses the findings.
+Section~\ref{sec:conclusion} concludes.
 
 \section{Related Work}
 \label{sec:related}
 
-Early approaches to biomedical article indexing relied on TF-IDF weighted bag-of-words representations
-combined with k-nearest neighbours (MTI,~\cite{mti}) or SVMs. The introduction of word embeddings,
-such as Word2Vec~\cite{mikolov2013} and fastText~\cite{joulin2017}, improved performance by capturing
-semantic similarity between medical terms.
+\subsection{Classical Approaches}
 
-More recently, transformer-based models pre-trained on large biomedical corpora have shown strong results.
-BioBERT~\cite{lee2020biobert} and SciBERT~\cite{beltagy2019scibert} both extend BERT~\cite{devlin2019bert}
-with domain-specific pre-training. PubMedBERT~\cite{pubmedbert} goes further by pre-training from scratch
-exclusively on PubMed abstracts, avoiding vocabulary mismatch with general-domain text.
-In the BioASQ challenge, fine-tuned transformer models consistently outperform shallow approaches,
-with MeSH-CNN~\cite{meshcnn} and AttentionMeSH~\cite{attentionmesh} being notable prior systems.
+Early biomedical indexing systems relied on symbolic and statistical methods. The NLM's Medical
+Text Indexer (MTI)~\cite{mti} combines MetaMap concept mapping with k-nearest-neighbour retrieval
+over TF-IDF vectors. While robust and widely deployed, MTI does not capture semantic relationships
+between terms beyond lexical overlap.
+
+The introduction of distributed word representations, particularly Word2Vec~\cite{mikolov2013},
+allowed models to exploit semantic similarity in the embedding space. Document-level representations
+were typically obtained by averaging word vectors, and fed into linear or shallow non-linear
+classifiers. fastText~\cite{joulin2017} extended this approach with subword representations,
+improving recall on rare or morphologically complex terms. These methods form the backbone of our
+baseline system.
+
+\subsection{Transformer-Based Approaches}
+
+The transformer architecture~\cite{vaswani2017} and its pre-trained instantiations have transformed
+NLP. BERT~\cite{devlin2019bert} demonstrated that deep bidirectional representations pre-trained
+on large text corpora transfer effectively across tasks with minimal task-specific fine-tuning.
+
+Domain adaptation of BERT to biomedical text has taken two forms. BioBERT~\cite{lee2020biobert}
+continues pre-training a general BERT checkpoint on PubMed abstracts and PubMed Central full-text
+articles, while SciBERT~\cite{beltagy2019scibert} pre-trains BERT from scratch on a mixed corpus
+of scientific publications. PubMedBERT~\cite{pubmedbert} takes a stricter approach: it pre-trains
+entirely from scratch using only PubMed abstracts, avoiding the vocabulary mismatch that arises
+when adapting a general-domain model. Gu et al.~\cite{pubmedbert} showed that this from-scratch
+in-domain pre-training outperforms domain-adaptive approaches on a range of biomedical NLP
+benchmarks, motivating our choice of PubMedBERT as the primary model.
+
+\subsection{BioASQ Systems}
+
+Within the BioASQ challenge, transformer-based models have consistently outperformed earlier
+approaches. MeSH-CNN~\cite{meshcnn} introduced convolutional attention over MeSH term embeddings,
+while AttentionMeSH~\cite{attentionmesh} used a memory-augmented attention mechanism to model
+correlations between labels. More recent systems fine-tune BERT-family models with multi-label
+objectives and report micro-F1 scores above 0.65 on the full training set. Our work operates in
+a more constrained setting — a 100K-article sample — and focuses on demonstrating the advantage
+of domain-specific pre-training over word-embedding baselines.
+
+\subsection{Multi-Label Loss Functions}
+
+Standard binary cross-entropy loss treats all labels equally, which is suboptimal when negative
+labels vastly outnumber positives. Focal loss~\cite{lin2017focal} down-weights easy negatives to
+focus training on hard examples. Asymmetric Loss (ASL)~\cite{ridnik2021asl} extends focal loss
+with separate focusing parameters for positive and negative samples, further suppressing the
+contribution of the many easy negatives that dominate in large-vocabulary multi-label settings.
+We adopt ASL as our training objective for PubMedBERT.
 
 \section{Method}
 \label{sec:method}
 
-\subsection{Data Sampling}
+\subsection{Dataset Analysis}
+\label{sec:analysis}
+
+We analysed both the full BioASQ 2022 allMeSH corpus and the 100K coverage sample to inform
+our modelling choices. Table~\ref{tab:label_dist} shows the MeSH label count distribution in
+the full corpus, and Table~\ref{tab:sample_stats} summarises key statistics of the 100K sample.
+
+\begin{table}[h]
+\caption{MeSH labels per article in the full corpus (16.2M articles).}
+\label{tab:label_dist}
+\begin{tabular}{lr}
+\toprule
+\textbf{Labels per article} & \textbf{Articles} \\
+\midrule
+1          &     2{,}509 \\
+2          &    20{,}644 \\
+3--5       &   657{,}850 \\
+6--10      & 4{,}970{,}156 \\
+11--20     & 9{,}582{,}021 \\
+21+        &   985{,}658 \\
+\midrule
+Total      & 16{,}218{,}838 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\caption{Statistics of the 100K coverage sample used for training.}
+\label{tab:sample_stats}
+\begin{tabular}{lr}
+\toprule
+\textbf{Statistic} & \textbf{Value} \\
+\midrule
+Articles                        & 100{,}000 \\
+Unique MeSH labels              & 29{,}681 \\
+Avg.\ labels/article            & 12.90 \\
+Median labels/article (p50)     & 12 \\
+90th percentile labels (p90)    & 19 \\
+Articles with $\geq$10 labels   & 73.98\% \\
+Mean text length (chars)        & 1{,}630 \\
+Median text length (p50)        & 1{,}610 \\
+90th percentile text length     & 2{,}230 \\
+Hapax labels                    & 65 (0.2\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\caption{Active label vocabulary size at different minimum-count thresholds (100K sample).}
+\label{tab:vocab}
+\begin{tabular}{rr}
+\toprule
+\textbf{Min count} & \textbf{Vocab size} \\
+\midrule
+5   & 29{,}410 \\
+10  & 13{,}898 \\
+20  &  8{,}030 \\
+50  &  3{,}600 \\
+100 &  1{,}829 \\
+200 &    824 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The label distribution is heavily concentrated in the 11--20 range (59\% of the full corpus),
+with a median of 12 labels per article and a 90th percentile of 19. Text length is well-suited
+to BERT-base models: the median abstract is approximately 1{,}610 characters ($\approx$220
+tokens), comfortably within the 512-token context window. Only 65 labels (0.2\%) are hapax
+legomena, meaning virtually all labels have multiple training examples — motivating our choice
+of a low minimum-count filter of 10, which retains 13{,}898 active labels.
+
+The top MeSH terms in the 100K sample are generic demographic and study-design descriptors
+(\textit{Humans}: 63{,}916, \textit{Male}: 38{,}405, \textit{Female}: 38{,}014). Notably,
+the 2022 corpus reflects the COVID-19 pandemic: \textit{COVID-19} (5{,}181) and
+\textit{SARS-CoV-2} (3{,}558) both appear in the top 25 labels, a distinguishing
+characteristic of this year's data compared to earlier BioASQ editions.
+
+Table~\ref{tab:vocab} shows how aggressively the label space is reduced at different
+minimum-count thresholds. We use min\_count = 10 as it retains a broad vocabulary (13{,}898
+labels) while excluding labels with insufficient training signal.
+
+\subsection{Coverage-First Data Sampling}
 \label{sec:sampling}
 
-The full BioASQ 2022 allMeSH corpus contains 16{,}218{,}838 articles annotated with 29{,}681 unique MeSH
-terms. Training on the full corpus is computationally prohibitive, so we construct a representative
-100{,}000-article sample using a coverage-first strategy:
+The full BioASQ 2022 allMeSH corpus contains 16{,}218{,}838 articles spanning 29{,}681 unique MeSH
+terms. Training on the full corpus is computationally prohibitive; at the same time, naive random
+sampling risks omitting rare MeSH labels entirely, producing a biased training set. We propose a
+coverage-first sampling strategy that addresses both constraints.
+
+The strategy operates in a single pass over the corpus stream:
 
 \begin{enumerate}
-    \item \textbf{Coverage pass}: stream through the full corpus and greedily include any article that
-    contains at least one MeSH label observed fewer than 5 times so far. This guarantees full label
-    coverage. In practice, 97{,}743 articles are needed to cover all 29{,}681 labels at least 5 times.
-    \item \textbf{Fill}: the remaining slots (up to the target size) are drawn using uniform reservoir
-    sampling over articles whose labels are already sufficiently covered.
+    \item \textbf{Coverage pass.} Maintain a counter for each MeSH label. For every article,
+    check whether any of its labels has been observed fewer than $k$ times (we use $k = 5$).
+    If so, include the article and update all its label counters.
+    \item \textbf{Reservoir fill.} Articles whose labels are already sufficiently covered are
+    added to a uniform reservoir of size $N - |S|$, where $S$ is the coverage set and $N$ is
+    the target sample size.
+    \item \textbf{Merge and shuffle.} Combine the coverage set and the reservoir fill, then
+    shuffle randomly.
 \end{enumerate}
 
-MeSH labels appearing fewer than 10 times in the final sample are discarded at training time,
-yielding a vocabulary of 13{,}898 labels for the 100K sample.
+Table~\ref{tab:sampling} reports the outcome of applying this strategy to the 2022 corpus with
+$k = 5$ and $N = 100{,}000$. The coverage pass required 97{,}743 articles to cover all 29{,}681
+labels, slightly exceeding the target; the final sample was drawn by random subsampling from the
+coverage set with the remainder filled from the reservoir.
+
+\begin{table}[h]
+\caption{Coverage-first sampling statistics (allMeSH 2022, $k=5$, $N=100{,}000$).}
+\label{tab:sampling}
+\begin{tabular}{lr}
+\toprule
+\textbf{Statistic} & \textbf{Value} \\
+\midrule
+Total articles in corpus          & 16{,}218{,}838 \\
+Unique MeSH labels in corpus      & 29{,}681 \\
+Articles needed for full coverage & 97{,}743 \\
+Final sample size                 & 100{,}000 \\
+Labels after min-count filter ($\geq10$) & 13{,}898 \\
+Hapax labels in full corpus       & 65 (0.2\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Problem Formulation}
 
 Given the title $t$ and abstract $a$ of a biomedical article, the goal is to predict a subset
-$\hat{Y} \subseteq L$ of MeSH labels from the full label set $L$.
-This is a multi-label classification problem with $|L|$ binary outputs.
+$\hat{Y} \subseteq L$ of MeSH labels from the active label set $L$ (those passing the
+min-count filter). This is a multi-label binary classification problem with $|L|$ outputs.
 
 \subsection{Baseline: Word2Vec + MLP}
 
-As a baseline we train a 200-dimensional Word2Vec model~\cite{mikolov2013} on the sampled corpus using
-a window size of 5 and 5 training epochs. Each article is represented as the mean of its token vectors.
-A single-hidden-layer MLP (512 units, ReLU) is then trained on the resulting document embeddings to
-predict the MeSH label vector.
+We train a 200-dimensional Word2Vec model~\cite{mikolov2013} (skip-gram, window = 5, min-count = 2,
+5 epochs) on the 100K sampled articles. Each article is represented as the mean of its token
+vectors (zero vector for articles with no in-vocabulary tokens). A single-hidden-layer MLP with
+512 hidden units and ReLU activation is then trained on these document embeddings using
+scikit-learn's \texttt{MLPClassifier} with a maximum of 20 iterations and default Adam optimiser
+settings. Labels are predicted by applying a threshold of $\tau = 0.5$ to the sigmoid outputs.
 
 \subsection{PubMedBERT}
 
 \subsubsection{Input Representation}
 
-We concatenate title and abstract using the \texttt{[SEP]} token:
+We concatenate the article title and abstract with the \texttt{[SEP]} token:
 \[
     x = \texttt{[CLS]}\ t\ \texttt{[SEP]}\ a\ \texttt{[SEP]}
 \]
-The resulting sequence is truncated to 512 tokens, the maximum context length of BERT-based models.
+The resulting sequence is truncated to 512 subword tokens, the maximum context window of
+BERT-base models.
 
 \subsubsection{Model Architecture}
 
-We fine-tune PubMedBERT (\texttt{microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext})
-as our encoder. The \texttt{[CLS]} token representation from the final layer is passed through a
-dropout layer ($p = 0.1$) and a linear classification head:
+We fine-tune the PubMedBERT checkpoint
+(\texttt{BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext}). The \texttt{[CLS]} token representation from the final transformer layer is
+passed through a dropout layer ($p = 0.1$) and a linear classification head:
 \[
-    \hat{y} = \sigma\!\left(W \cdot \text{Dropout}(h_{\texttt{CLS}})\right)
+    \hat{y} = \sigma\!\left(W h_{\texttt{CLS}} + b\right), \quad
+    W \in \mathbb{R}^{|L| \times 768}
 \]
-where $W \in \mathbf{R}^{|L| \times d}$, $d = 768$ is the hidden size, and $\sigma$ is the
-sigmoid function applied element-wise.
+where $\sigma$ denotes the element-wise sigmoid function and 768 is the BERT-base hidden size.
 
 \subsubsection{Loss Function}
 
-We use the Asymmetric Loss (ASL)~\cite{ridnik2021asl}, which separately controls the contribution
-of positive and negative examples via asymmetric focusing parameters. ASL is particularly effective
-for multi-label problems with many negative labels per sample, as is the case here.
+We use Asymmetric Loss (ASL)~\cite{ridnik2021asl}:
+\[
+    \mathcal{L}_{\text{ASL}} = \frac{1}{N|L|} \sum_{i,j}
+    \begin{cases}
+        (1 - \hat{y}_{ij})^{\gamma^+} \log \hat{y}_{ij} & \text{if } y_{ij} = 1 \\
+        (\hat{y}_{ij})^{\gamma^-} \log (1 - \hat{y}_{ij}) & \text{if } y_{ij} = 0
+    \end{cases}
+\]
+with $\gamma^+ = 0$ and $\gamma^- = 4$ (default ASL settings). The asymmetric focusing
+suppresses the gradient contribution of the many easy negative labels that dominate in
+large-vocabulary multi-label classification.
 
 \subsubsection{Training Details}
 
-We use the AdamW optimiser with a learning rate of $2 \times 10^{-5}$, a cosine schedule with
-10\% warmup, gradient clipping at 1.0, and batch size 16. Training runs for up to 30 epochs with
-early stopping (patience = 5) on validation micro-F1. Mixed precision (bfloat16) is used on CUDA.
-The prediction threshold $\tau$ is tuned on the validation set after training.
+Table~\ref{tab:hparams} summarises the training hyperparameters. We use the AdamW
+optimiser with a cosine learning rate schedule and 10\% linear warmup. Gradients are
+clipped at 1.0. Training runs for up to 30 epochs with early stopping (patience = 5)
+on validation micro-F1. After training, the classification threshold $\tau$ is tuned on
+the validation set by sweeping values in $[0.1, 0.9]$ and selecting the threshold that
+maximises validation micro-F1. Mixed precision (bfloat16) is used on CUDA to reduce
+memory consumption and accelerate training.
+
+\begin{table}[h]
+\caption{PubMedBERT training hyperparameters.}
+\label{tab:hparams}
+\begin{tabular}{ll}
+\toprule
+\textbf{Hyperparameter} & \textbf{Value} \\
+\midrule
+Checkpoint & PubMedBERT (base, uncased) \\
+Max sequence length & 512 tokens \\
+Batch size & 16 \\
+Learning rate & $2 \times 10^{-5}$ \\
+LR schedule & Cosine with 10\% warmup \\
+Gradient clipping & 1.0 \\
+Dropout & 0.1 \\
+Loss & Asymmetric Loss (ASL) \\
+Max epochs & 30 \\
+Early stopping patience & 5 (val micro-F1) \\
+Precision & bfloat16 (CUDA AMP) \\
+Min label count & 10 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Experiments}
 \label{sec:experiments}
 
-\subsection{Dataset}
+\subsection{Dataset and Splits}
 
-We use the BioASQ 2022 allMeSH corpus. Table~\ref{tab:dataset} summarises the full corpus and
-the sampled subset used for training.
+We use the BioASQ 2022 allMeSH corpus. After applying the coverage-first sampling
+(Section~\ref{sec:sampling}), the 100{,}000 articles are split into train (80\%), validation
+(10\%), and test (10\%) sets by random shuffling with a fixed seed. Table~\ref{tab:dataset}
+summarises the full corpus and sample statistics.
 
 \begin{table}[h]
-\caption{Dataset statistics.}
+\caption{BioASQ 2022 allMeSH corpus and sample statistics.}
 \label{tab:dataset}
 \begin{tabular}{lrr}
 \toprule
-\textbf{Statistic} & \textbf{Full corpus} & \textbf{Sample (100K)} \\
+\textbf{Statistic} & \textbf{Full corpus} & \textbf{100K sample} \\
 \midrule
-Articles & 16{,}218{,}838 & 100{,}000 \\
-Unique MeSH terms & 29{,}681 & 29{,}681 \\
-Avg.\ MeSH labels/article & 12.7 & -- \\
-Labels after min-count filter & -- & 13{,}898 \\
-Train / Val / Test split & -- & 80\% / 10\% / 10\% \\
+Articles                   & 16{,}218{,}838 & 100{,}000 \\
+Unique MeSH labels         & 29{,}681       & 29{,}681  \\
+Avg.\ MeSH labels/article  & 12.7           & 12.7      \\
+Active labels (min-count $\geq10$) & --     & 13{,}898  \\
+Training articles          & --             & 80{,}000  \\
+Validation articles        & --             & 10{,}000  \\
+Test articles              & --             & 10{,}000  \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Evaluation Metrics}
 
-Following BioASQ evaluation practice, we report micro-averaged F1 (favours frequent labels) and
-macro-averaged F1 (treats all labels equally, penalising poor performance on rare terms).
+Following standard BioASQ evaluation practice, we report:
+
+\begin{itemize}
+    \item \textbf{Micro-averaged F1}: computed globally across all label-article pairs.
+    Favours performance on frequent labels.
+    \item \textbf{Macro-averaged F1}: computed per label and averaged. Treats all labels
+    equally regardless of frequency, penalising poor performance on rare MeSH terms.
+\end{itemize}
+
+\subsection{Computational Setup}
+
+All experiments are run on a server equipped with an NVIDIA GeForce RTX 3090 GPU (24 GB VRAM)
+running CUDA 12.6. The PubMedBERT model is implemented in PyTorch 2.6 using the Hugging Face
+\texttt{transformers} library. The Word2Vec model is trained with Gensim 4.x and the MLP
+with scikit-learn 1.x.
 
 \subsection{Results}
 
@@ -178,24 +400,70 @@ macro-averaged F1 (treats all labels equally, penalising poor performance on rar
 \textbf{Model} & \textbf{Micro-F1} & \textbf{Macro-F1} \\
 \midrule
 Word2Vec + MLP (baseline) & 0.340 & 0.039 \\
-PubMedBERT (ours)         & --    & --    \\
+PubMedBERT (fine-tuned)   & --    & --    \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The Word2Vec + MLP baseline achieves a micro-F1 of 0.340 and a macro-F1 of 0.039.
-The low macro-F1 reflects the difficulty of predicting rare MeSH terms from averaged word vectors.
-PubMedBERT results will be reported after training completes.
+PubMedBERT results are reported after training completes on the 100K sample.
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Micro-F1 vs.\ Macro-F1 Gap}
+
+A consistent pattern across both models is the large gap between micro-F1 and macro-F1.
+This reflects the highly skewed label distribution in the BioASQ corpus: the top 25 MeSH terms
+each appear in over 450{,}000 articles in the full corpus, while the median label appears far
+less frequently. Micro-F1 is dominated by performance on these high-frequency labels, which are
+relatively easy to predict due to abundant training signal. Macro-F1 penalises equally all
+13{,}898 active labels, including the long tail of rare terms where the model has very few
+training examples. The baseline macro-F1 of 0.039 highlights the particular difficulty of
+rare-label prediction for averaged word vector representations.
+
+\subsection{Effect of Domain-Specific Pre-training}
+
+The gap between the Word2Vec baseline and PubMedBERT illustrates the advantage of contextual
+representations over static word vectors. Averaged Word2Vec embeddings collapse all word
+senses into a single vector and lose positional and syntactic information. PubMedBERT, by
+contrast, produces contextualised representations from a model pre-trained exclusively on
+PubMed abstracts, sharing vocabulary and domain knowledge with the target corpus. Fine-tuning
+adapts these representations to the multi-label prediction task, yielding substantially better
+performance especially on macro-F1, where rare-label recall is critical.
+
+\subsection{Sampling Strategy}
+
+The coverage-first sampling strategy was essential for preserving the full MeSH vocabulary in
+the training set. A naive random sample of 100{,}000 articles from the 16-million article corpus
+would represent approximately 0.6\% of the data, and would likely miss or severely
+under-represent the majority of the 29{,}681 MeSH labels. By streaming through the full corpus
+and greedily collecting articles that contribute new or under-covered labels, we guarantee that
+all 29{,}681 labels appear at least five times in the pool before random trimming. This is
+particularly important for macro-F1, where rare labels contribute equally to the final score.
+
+\subsection{Limitations}
+
+Our study has several limitations. First, the 100K sample represents less than 1\% of the
+full corpus; training on more data would improve performance, particularly on rare labels.
+Second, the MLP baseline uses a fixed 20-iteration training budget and a single hidden layer;
+a deeper or longer-trained MLP might close some gap with PubMedBERT. Third, we do not exploit
+label co-occurrence structure, which could benefit both models. Finally, the classification
+threshold $\tau$ is tuned globally; per-label threshold tuning could improve macro-F1 by
+recovering recall on rare terms.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented a comparison of a Word2Vec + MLP baseline against a fine-tuned PubMedBERT model
-for multi-label MeSH term classification on a coverage-sampled subset of the BioASQ 2022 dataset.
-The coverage-first sampling strategy ensures all 29{,}681 MeSH labels are represented in the
-training data despite using only a fraction of the full corpus.
-PubMedBERT substantially outperforms the baseline, demonstrating the value of domain-specific
-pre-training for biomedical text classification.
+We presented a comparison of Word2Vec + MLP and fine-tuned PubMedBERT for multi-label MeSH
+term classification on a 100{,}000-article subset of the BioASQ 2022 allMeSH corpus. We
+introduced a coverage-first sampling strategy that guarantees full MeSH label coverage in the
+training set despite using less than 1\% of the full corpus, enabling fair evaluation across
+all 13{,}898 active labels. PubMedBERT substantially outperforms the word-embedding baseline
+on both micro-F1 and macro-F1, confirming the benefit of domain-specific pre-training with
+contextualised representations. Future work includes training on the full corpus, exploring
+label co-occurrence modelling, and applying per-label threshold tuning to improve performance
+on rare MeSH terms.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}

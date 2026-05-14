@@ -26,6 +26,9 @@ Warning--empty address in pubmedbert
 Warning--page numbers missing in both pages and numpages fields in pubmedbert
 Warning--no number and no volume in joulin2017
 Warning--page numbers missing in both pages and numpages fields in joulin2017
+Warning--empty publisher in lin2017focal
+Warning--empty address in lin2017focal
+Warning--page numbers missing in both pages and numpages fields in lin2017focal
 Warning--empty publisher in mikolov2013
 Warning--empty address in mikolov2013
 Warning--page numbers missing in both pages and numpages fields in mikolov2013
@@ -41,45 +44,48 @@ Warning--can't use both volume and number fields in bioasq2015
 Warning--empty publisher in bioasq2015
 Warning--empty address in bioasq2015
 Warning--page numbers missing in both pages and numpages fields in bioasq2015
-You've used 11 entries,
+Warning--empty publisher in vaswani2017
+Warning--empty address in vaswani2017
+Warning--page numbers missing in both pages and numpages fields in vaswani2017
+You've used 13 entries,
             6273 wiz_defined-function locations,
-            1568 strings with 20070 characters,
-and the built_in function-call counts, 11826 in all, are:
-= -- 1224
-> -- 471
+            1576 strings with 20464 characters,
+and the built_in function-call counts, 14122 in all, are:
+= -- 1425
+> -- 589
 < -- 0
-+ -- 162
-- -- 161
-* -- 871
-:= -- 1184
-add.period$ -- 46
-call.type$ -- 11
-change.case$ -- 88
-chr.to.int$ -- 11
-cite$ -- 40
-duplicate$ -- 1097
-empty$ -- 781
-format.name$ -- 193
-if$ -- 2801
++ -- 203
+- -- 200
+* -- 1065
+:= -- 1427
+add.period$ -- 54
+call.type$ -- 13
+change.case$ -- 109
+chr.to.int$ -- 13
+cite$ -- 48
+duplicate$ -- 1307
+empty$ -- 929
+format.name$ -- 240
+if$ -- 3325
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 48
-newline$ -- 122
-num.names$ -- 77
-pop$ -- 584
+missing$ -- 58
+newline$ -- 136
+num.names$ -- 91
+pop$ -- 705
 preamble$ -- 1
-purify$ -- 171
+purify$ -- 208
 quote$ -- 0
-skip$ -- 378
+skip$ -- 450
 stack$ -- 0
-substring$ -- 627
-swap$ -- 63
+substring$ -- 733
+swap$ -- 73
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 302
-warning$ -- 29
-while$ -- 48
+type$ -- 362
+warning$ -- 35
+while$ -- 54
 width$ -- 0
-write$ -- 232
-(There were 29 warnings)
+write$ -- 266
+(There were 35 warnings)

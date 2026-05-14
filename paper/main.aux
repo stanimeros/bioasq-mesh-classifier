@@ -3,29 +3,58 @@
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \citation{bioasq2015}
+\citation{pubmedbert}
 \citation{mti}
 \citation{mikolov2013}
 \citation{joulin2017}
+\citation{vaswani2017}
+\citation{devlin2019bert}
 \citation{lee2020biobert}
 \citation{beltagy2019scibert}
-\citation{devlin2019bert}
 \citation{pubmedbert}
-\citation{meshcnn}
-\citation{attentionmesh}
-\citation{mikolov2013}
+\citation{pubmedbert}
 \@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{1}{section.2}\protected@file@percent }
 \newlabel{sec:related}{{2}{1}{Related Work}{section.2}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{1}{section.3}\protected@file@percent }
-\newlabel{sec:method}{{3}{1}{Method}{section.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Data Sampling}{1}{subsection.3.1}\protected@file@percent }
-\newlabel{sec:sampling}{{3.1}{1}{Data Sampling}{subsection.3.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Problem Formulation}{1}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Baseline: Word2Vec + MLP}{1}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}PubMedBERT}{1}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.1}Input Representation}{1}{subsubsection.3.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Classical Approaches}{1}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Transformer-Based Approaches}{1}{subsection.2.2}\protected@file@percent }
+\citation{meshcnn}
+\citation{attentionmesh}
+\citation{lin2017focal}
 \citation{ridnik2021asl}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}BioASQ Systems}{2}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Multi-Label Loss Functions}{2}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{2}{section.3}\protected@file@percent }
+\newlabel{sec:method}{{3}{2}{Method}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Dataset Analysis}{2}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:analysis}{{3.1}{2}{Dataset Analysis}{subsection.3.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces MeSH labels per article in the full corpus (16.2M articles).}}{2}{table.caption.4}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:label_dist}{{1}{2}{MeSH labels per article in the full corpus (16.2M articles)}{table.caption.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Statistics of the 100K coverage sample used for training.}}{2}{table.caption.5}\protected@file@percent }
+\newlabel{tab:sample_stats}{{2}{2}{Statistics of the 100K coverage sample used for training}{table.caption.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Active label vocabulary size at different minimum-count thresholds (100K sample).}}{2}{table.caption.6}\protected@file@percent }
+\newlabel{tab:vocab}{{3}{2}{Active label vocabulary size at different minimum-count thresholds (100K sample)}{table.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Coverage-First Data Sampling}{2}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:sampling}{{3.2}{2}{Coverage-First Data Sampling}{subsection.3.2}{}}
+\citation{mikolov2013}
+\citation{ridnik2021asl}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Coverage-first sampling statistics (allMeSH 2022, $k=5$, $N=100{,}000$).}}{3}{table.caption.7}\protected@file@percent }
+\newlabel{tab:sampling}{{4}{3}{Coverage-first sampling statistics (allMeSH 2022, $k=5$, $N=100{,}000$)}{table.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Problem Formulation}{3}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Baseline: Word2Vec + MLP}{3}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}PubMedBERT}{3}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.1}Input Representation}{3}{subsubsection.3.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.2}Model Architecture}{3}{subsubsection.3.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.3}Loss Function}{3}{subsubsection.3.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.4}Training Details}{3}{subsubsection.3.5.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces PubMedBERT training hyperparameters.}}{3}{table.caption.8}\protected@file@percent }
+\newlabel{tab:hparams}{{5}{3}{PubMedBERT training hyperparameters}{table.caption.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{3}{section.4}\protected@file@percent }
+\newlabel{sec:experiments}{{4}{3}{Experiments}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Dataset and Splits}{3}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Evaluation Metrics}{3}{subsection.4.2}\protected@file@percent }
 \bibstyle{ACM-Reference-Format}
 \bibdata{references}
 \bibcite{beltagy2019scibert}{{1}{2019}{{Beltagy et~al\mbox  {.}}}{{}}}
@@ -34,11 +63,28 @@
 \bibcite{pubmedbert}{{4}{2021}{{Gu et~al\mbox  {.}}}{{}}}
 \bibcite{joulin2017}{{5}{2016}{{Joulin et~al\mbox  {.}}}{{}}}
 \bibcite{lee2020biobert}{{6}{2020}{{Lee et~al\mbox  {.}}}{{}}}
-\bibcite{mikolov2013}{{7}{2013}{{Mikolov et~al\mbox  {.}}}{{}}}
-\bibcite{mti}{{8}{[n.\,d.]}{{National Library of Medicine}}{{}}}
-\bibcite{attentionmesh}{{9}{2019}{{Peng et~al\mbox  {.}}}{{}}}
-\bibcite{ridnik2021asl}{{10}{2021}{{Ridnik et~al\mbox  {.}}}{{}}}
-\bibcite{bioasq2015}{{11}{2015}{{Tsatsaronis et~al\mbox  {.}}}{{}}}
+\bibcite{lin2017focal}{{7}{2017}{{Lin et~al\mbox  {.}}}{{}}}
+\bibcite{mikolov2013}{{8}{2013}{{Mikolov et~al\mbox  {.}}}{{}}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces BioASQ 2022 allMeSH corpus and sample statistics.}}{4}{table.caption.9}\protected@file@percent }
+\newlabel{tab:dataset}{{6}{4}{BioASQ 2022 allMeSH corpus and sample statistics}{table.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Computational Setup}{4}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Results}{4}{subsection.4.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Test set results on the 100K coverage sample.}}{4}{table.caption.10}\protected@file@percent }
+\newlabel{tab:results}{{7}{4}{Test set results on the 100K coverage sample}{table.caption.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{4}{section.5}\protected@file@percent }
+\newlabel{sec:discussion}{{5}{4}{Discussion}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Micro-F1 vs.\ Macro-F1 Gap}{4}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Effect of Domain-Specific Pre-training}{4}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Sampling Strategy}{4}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Limitations}{4}{subsection.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion}{4}{section.6}\protected@file@percent }
+\newlabel{sec:conclusion}{{6}{4}{Conclusion}{section.6}{}}
+\@writefile{toc}{\contentsline {section}{References}{4}{section*.12}\protected@file@percent }
+\bibcite{mti}{{9}{[n.\,d.]}{{National Library of Medicine}}{{}}}
+\bibcite{attentionmesh}{{10}{2019}{{Peng et~al\mbox  {.}}}{{}}}
+\bibcite{ridnik2021asl}{{11}{2021}{{Ridnik et~al\mbox  {.}}}{{}}}
+\bibcite{bioasq2015}{{12}{2015}{{Tsatsaronis et~al\mbox  {.}}}{{}}}
+\bibcite{vaswani2017}{{13}{2017}{{Vaswani et~al\mbox  {.}}}{{}}}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
 \newlabel{tocindent1}{4.185pt}
@@ -46,21 +92,5 @@
 \newlabel{tocindent3}{18.198pt}
 \newlabel{tocindent4}{0pt}
 \newlabel{tocindent5}{0pt}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.2}Model Architecture}{2}{subsubsection.3.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.3}Loss Function}{2}{subsubsection.3.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.4}Training Details}{2}{subsubsection.3.4.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{2}{section.4}\protected@file@percent }
-\newlabel{sec:experiments}{{4}{2}{Experiments}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Dataset}{2}{subsection.4.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Dataset statistics.}}{2}{table.caption.4}\protected@file@percent }
-\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{tab:dataset}{{1}{2}{Dataset statistics}{table.caption.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Evaluation Metrics}{2}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Results}{2}{subsection.4.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Test set results on the 100K coverage sample.}}{2}{table.caption.5}\protected@file@percent }
-\newlabel{tab:results}{{2}{2}{Test set results on the 100K coverage sample}{table.caption.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{2}{section.5}\protected@file@percent }
-\newlabel{sec:conclusion}{{5}{2}{Conclusion}{section.5}{}}
-\@writefile{toc}{\contentsline {section}{References}{2}{section*.7}\protected@file@percent }
-\newlabel{TotPages}{{2}{2}{}{page.2}{}}
-\gdef \@abspage@last{2}
+\newlabel{TotPages}{{5}{5}{}{page.5}{}}
+\gdef \@abspage@last{5}

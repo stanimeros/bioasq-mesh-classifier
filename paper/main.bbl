@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{11}
+\begin{thebibliography}{13}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -102,6 +102,17 @@
 \newblock
 
 
+\bibitem[Lin et~al\mbox{.}(2017)]%
+        {lin2017focal}
+\bibfield{author}{\bibinfo{person}{Tsung-Yi Lin}, \bibinfo{person}{Priya
+  Goyal}, \bibinfo{person}{Ross Girshick}, \bibinfo{person}{Kaiming He}, {and}
+  \bibinfo{person}{Piotr Doll{\'a}r}.} \bibinfo{year}{2017}\natexlab{}.
+\newblock \showarticletitle{Focal loss for dense object detection}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the IEEE International Conference on
+  Computer Vision}}.
+\newblock
+
+
 \bibitem[Mikolov et~al\mbox{.}(2013)]%
         {mikolov2013}
 \bibfield{author}{\bibinfo{person}{Tomas Mikolov}, \bibinfo{person}{Ilya
@@ -153,6 +164,19 @@
 \newblock \showarticletitle{An overview of the {BIOASQ} large-scale biomedical
   semantic indexing and question answering competition}. In
   \bibinfo{booktitle}{\emph{BMC Bioinformatics}}, Vol.~\bibinfo{volume}{16}.
+\newblock
+
+
+\bibitem[Vaswani et~al\mbox{.}(2017)]%
+        {vaswani2017}
+\bibfield{author}{\bibinfo{person}{Ashish Vaswani}, \bibinfo{person}{Noam
+  Shazeer}, \bibinfo{person}{Niki Parmar}, \bibinfo{person}{Jakob Uszkoreit},
+  \bibinfo{person}{Llion Jones}, \bibinfo{person}{Aidan~N Gomez},
+  \bibinfo{person}{{\L}ukasz Kaiser}, {and} \bibinfo{person}{Illia
+  Polosukhin}.} \bibinfo{year}{2017}\natexlab{}.
+\newblock \showarticletitle{Attention is all you need}. In
+  \bibinfo{booktitle}{\emph{Advances in Neural Information Processing
+  Systems}}.
 \newblock
 
 
