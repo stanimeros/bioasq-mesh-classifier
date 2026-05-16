@@ -35,7 +35,7 @@ git clean -fd \
 chmod +x \
   run_biobert.sh \
   run_scibert.sh \
-  run_pubmedbert.sh \
+  run_biobert.sh \
   update.sh \
   setup.sh \
   create_sample.sh \

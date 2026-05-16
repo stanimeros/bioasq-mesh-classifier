@@ -1,17 +1,18 @@
 import argparse
 import os
 import pickle
+import numpy as np
 from contextlib import nullcontext
 
 import torch
 import yaml
 import wandb
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, get_cosine_schedule_with_warmup
 from tqdm import tqdm
 
-from dataset import load_bioasq_data, build_label_vocab, encode_labels, BioASQDataset
-from evaluate import evaluate_transformer, find_best_threshold, save_results
+from dataset import load_bioasq_data, build_label_vocab, encode_labels, BioASQDataset, stratified_split
+from evaluate import evaluate_transformer, find_best_thresholds, save_results
 from model import AsymmetricLoss, BioASQClassifier
 
 
@@ -121,11 +122,12 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(cfg["model_name"])
     dataset = BioASQDataset(texts, label_vecs, tokenizer, num_labels=len(vocab), max_length=cfg["max_length"])
 
-    test_size = int(len(dataset) * cfg.get("test_split", 0.1))
-    val_size = int(len(dataset) * cfg["val_split"])
-    train_size = len(dataset) - val_size - test_size
-    train_set, val_set, test_set = random_split(dataset, [train_size, val_size, test_size])
-    print(f"Train: {train_size}, Val: {val_size}, Test: {test_size}")
+    train_set, val_set, test_set = stratified_split(
+        dataset, label_vecs, len(vocab),
+        val_split=cfg["val_split"],
+        test_split=cfg.get("test_split", 0.1),
+    )
+    print(f"Train: {len(train_set)}, Val: {len(val_set)}, Test: {len(test_set)} (stratified)")
 
     num_workers = int(os.environ.get("NUM_WORKERS", "4"))
     pin_memory = device.type == "cuda"
@@ -143,9 +145,7 @@ def main():
     scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
 
     best_path = os.path.join(cfg["output_dir"], "best_model.pt")
-    # First epoch must be able to beat this; otherwise tiny/smoke runs may never save a checkpoint
-    # (e.g. val micro-F1 stays 0.0) and test eval would crash on a missing file.
-    best_micro_f1 = float("-inf")
+    best_macro_f1 = float("-inf")
     patience = cfg.get("early_stopping_patience", 0)
     epochs_without_improvement = 0
 
@@ -182,20 +182,20 @@ def main():
             total_loss += loss.item()
 
         avg_loss = total_loss / len(train_loader)
-        micro_f1, macro_f1 = evaluate_transformer(model, val_loader, device, cfg.get("threshold", 0.5))
+        micro_f1, macro_f1 = evaluate_transformer(model, val_loader, device, np.full(len(vocab), cfg.get("threshold", 0.5)))
         print(f"Epoch {epoch+1}: loss={avg_loss:.4f} | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
         current_lr = scheduler.get_last_lr()[0]
         wandb.log({"epoch": epoch + 1, "train_loss": avg_loss, "val_micro_f1": micro_f1, "val_macro_f1": macro_f1, "lr": current_lr}, step=epoch + 1)
 
-        if micro_f1 > best_micro_f1:
-            best_micro_f1 = micro_f1
+        if macro_f1 > best_macro_f1:
+            best_macro_f1 = macro_f1
             epochs_without_improvement = 0
             torch.save(model.state_dict(), best_path)
-            print(f"  -> Saved best model (micro-F1={best_micro_f1:.4f})")
+            print(f"  -> Saved best model (macro-F1={best_macro_f1:.4f})")
         else:
             epochs_without_improvement += 1
             if patience and epochs_without_improvement >= patience:
-                print(f"  -> Early stopping after {epoch+1} epochs (no improvement for {patience} epochs)")
+                print(f"  -> Early stopping after {epoch+1} epochs (no improvement in macro-F1 for {patience} epochs)")
                 break
 
     if os.path.isfile(best_path):
@@ -204,13 +204,14 @@ def main():
         print("Warning: no best checkpoint saved; evaluating last-epoch weights.")
 
     print("Tuning threshold on validation set...")
-    best_threshold, val_micro, val_macro = find_best_threshold(model, val_loader, device)
-    print(f"Best threshold: {best_threshold:.2f} (val micro-F1={val_micro:.4f})")
+    best_thresholds, val_micro, val_macro = find_best_thresholds(model, val_loader, device)
+    print(f"Per-label thresholds tuned (val micro-F1={val_micro:.4f}, macro-F1={val_macro:.4f})")
 
-    micro_f1, macro_f1 = evaluate_transformer(model, test_loader, device, best_threshold)
-    save_results(cfg["output_dir"], micro_f1, macro_f1, best_threshold)
-    print(f"Test | threshold={best_threshold:.2f} | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f}")
-    wandb.log({"test_micro_f1": micro_f1, "test_macro_f1": macro_f1, "best_threshold": best_threshold}, step=cfg["epochs"])
+    micro_f1, macro_f1 = evaluate_transformer(model, test_loader, device, best_thresholds)
+    mean_threshold = float(best_thresholds.mean())
+    save_results(cfg["output_dir"], micro_f1, macro_f1, mean_threshold)
+    print(f"Test | micro-F1={micro_f1:.4f} | macro-F1={macro_f1:.4f} | mean threshold={mean_threshold:.3f}")
+    wandb.log({"test_micro_f1": micro_f1, "test_macro_f1": macro_f1, "mean_threshold": mean_threshold}, step=cfg["epochs"])
     wandb.finish()
     print("Training complete.")
 

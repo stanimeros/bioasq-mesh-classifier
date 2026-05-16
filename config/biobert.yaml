@@ -1,15 +1,15 @@
 data: data/sample.json
-output_dir: output/pubmedbert
-min_label_count: 10
+output_dir: output/biobert
+min_label_count: 25
 val_split: 0.1
 test_split: 0.1
 
 # Model
-model_name: microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext
+model_name: dmis-lab/biobert-base-cased-v1.2
 max_length: 512
 
 # Training
-epochs: 30
+epochs: 50
 early_stopping_patience: 5
 warmup_ratio: 0.1
 batch_size: 16

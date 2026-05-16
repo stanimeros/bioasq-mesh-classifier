@@ -2,7 +2,7 @@ import torch
 import ijson
 import random
 import zipfile
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Subset
 from collections import Counter
 from tqdm import tqdm
 
@@ -127,6 +127,73 @@ def encode_labels(label_lists, vocab):
         indices = [vocab[label] for label in labels if label in vocab]
         encoded.append(indices)
     return encoded
+
+
+def iterative_stratify(label_indices, num_labels, ratios, seed=42):
+    """Multi-label stratified split (Sechidis et al., 2011).
+
+    Returns a list of index lists, one per split, preserving per-label
+    distribution across all splits as closely as possible.
+    """
+    rng = random.Random(seed)
+    n = len(label_indices)
+    splits = [[] for _ in ratios]
+    assigned = [False] * n
+
+    # Build label -> article index mapping and per-label counts
+    label_to_indices = [[] for _ in range(num_labels)]
+    for i, labels in enumerate(label_indices):
+        for label in labels:
+            if label < num_labels:
+                label_to_indices[label].append(i)
+
+    label_counts = [len(idxs) for idxs in label_to_indices]
+    # desired[l][s] = how many more examples of label l we want in split s
+    desired = [[label_counts[l] * r for r in ratios] for l in range(num_labels)]
+    remaining = n
+
+    while remaining > 0:
+        # Find the label with fewest unassigned positive examples (skip empty labels)
+        rarest_label = -1
+        rarest_count = float("inf")
+        for l in range(num_labels):
+            c = label_counts[l]
+            if 0 < c < rarest_count:
+                rarest_count = c
+                rarest_label = l
+
+        if rarest_label == -1:
+            # All remaining articles have no in-vocab labels — distribute proportionally
+            unlabeled = [i for i in range(n) if not assigned[i]]
+            rng.shuffle(unlabeled)
+            for idx in unlabeled:
+                best = max(range(len(ratios)), key=lambda s: ratios[s])
+                splits[best].append(idx)
+                assigned[idx] = True
+                remaining -= 1
+            break
+
+        candidates = [i for i in label_to_indices[rarest_label] if not assigned[i]]
+        rng.shuffle(candidates)
+
+        for idx in candidates:
+            best = max(range(len(ratios)), key=lambda s: desired[rarest_label][s])
+            splits[best].append(idx)
+            assigned[idx] = True
+            remaining -= 1
+            for label in label_indices[idx]:
+                if label < num_labels:
+                    desired[label][best] -= 1  # only decrement the chosen split
+                    label_counts[label] -= 1
+
+    return splits
+
+
+def stratified_split(dataset, label_indices, num_labels, val_split, test_split, seed=42):
+    """Return (train_set, val_set, test_set) as Subset objects with stratified splits."""
+    train_ratio = 1.0 - val_split - test_split
+    idx_splits = iterative_stratify(label_indices, num_labels, [train_ratio, val_split, test_split], seed)
+    return tuple(Subset(dataset, idxs) for idxs in idx_splits)
 
 
 class BioASQDataset(Dataset):

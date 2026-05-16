@@ -36,7 +36,9 @@ class BioASQClassifier(nn.Module):
 
     def forward(self, input_ids, attention_mask):
         outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
-        # Use [CLS] token representation
-        cls = outputs.last_hidden_state[:, 0, :]
-        cls = self.dropout(cls)
-        return self.classifier(cls)
+        # Mean pooling over non-padding tokens
+        token_embeddings = outputs.last_hidden_state
+        mask_expanded = attention_mask.unsqueeze(-1).float()
+        pooled = (token_embeddings * mask_expanded).sum(1) / mask_expanded.sum(1).clamp(min=1e-9)
+        pooled = self.dropout(pooled)
+        return self.classifier(pooled)

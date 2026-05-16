@@ -1,16 +1,16 @@
 #!/bin/bash
-# Start PubMedBERT training under nohup (exit immediately; training keeps running).
+# Start BioBERT training under nohup (exit immediately; training keeps running).
 #
 # Usage:
-#   bash run_pubmedbert.sh
-#   SAMPLE=/path/to/sample.json bash run_pubmedbert.sh
+#   bash run_biobert.sh
+#   SAMPLE=/path/to/sample.json bash run_biobert.sh
 #
 # Env: SAMPLE (default data/sample.json),
 #      NUM_WORKERS (DataLoader; default 4, use 0 on NFS hangs).
-# Logs: logs/pubmedbert.log — tail -f logs/pubmedbert.log
+# Logs: logs/biobert.log — tail -f logs/biobert.log
 
 set -e
-MODEL=pubmedbert
+MODEL=biobert
 
 cd "$(dirname "$0")"
 source .venv/bin/activate

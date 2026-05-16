@@ -17,24 +17,42 @@ def collect_logits(model, loader, device):
     return np.vstack(all_probs), np.vstack(all_labels)
 
 
-def evaluate_transformer(model, loader, device, threshold):
+def evaluate_transformer(model, loader, device, thresholds):
     probs, labels = collect_logits(model, loader, device)
-    preds = (probs >= threshold).astype(int)
+    thresholds = np.asarray(thresholds)
+    preds = (probs >= thresholds).astype(int)
     return compute_f1(labels, preds)
 
 
-def find_best_threshold(model, loader, device, thresholds=None):
-    """Single val-set pass; sweep thresholds and return (best_threshold, micro_f1, macro_f1)."""
-    if thresholds is None:
-        thresholds = np.arange(0.1, 0.55, 0.05)
+def find_best_thresholds(model, loader, device, candidates=None):
+    """Per-label threshold tuning optimized for macro-F1.
+
+    Returns (thresholds_array, micro_f1, macro_f1) where thresholds_array has
+    one threshold per label.
+    """
+    if candidates is None:
+        candidates = np.arange(0.1, 0.60, 0.05)
     probs, labels = collect_logits(model, loader, device)
-    best_t, best_micro, best_macro = 0.5, 0.0, 0.0
-    for t in thresholds:
-        preds = (probs >= t).astype(int)
-        micro, macro = compute_f1(labels, preds)
-        if micro > best_micro:
-            best_t, best_micro, best_macro = t, micro, macro
-    return best_t, best_micro, best_macro
+
+    num_labels = probs.shape[1]
+    best_thresholds = np.full(num_labels, 0.5)
+
+    for j in range(num_labels):
+        p_j = probs[:, j]
+        y_j = labels[:, j]
+        if y_j.sum() == 0:
+            continue
+        best_t, best_f1 = 0.5, 0.0
+        for t in candidates:
+            pred_j = (p_j >= t).astype(int)
+            f1 = f1_score(y_j, pred_j, average="binary", zero_division=0)
+            if f1 > best_f1:
+                best_t, best_f1 = t, f1
+        best_thresholds[j] = best_t
+
+    preds = (probs >= best_thresholds).astype(int)
+    micro, macro = compute_f1(labels, preds)
+    return best_thresholds, micro, macro
 
 
 def evaluate_sklearn(clf, X_val, Y_val):
